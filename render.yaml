@@ -47,4 +47,6 @@ services:
       - key: DB_SSL_CA_PEM
         sync: false
       - key: CORS_ALLOWED_ORIGINS
-        sync: false
+        value: https://tabletop-restaurant.vercel.app
+      - key: OTP_SHOW_IN_API
+        value: "true"

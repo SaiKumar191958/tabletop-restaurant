@@ -57,7 +57,12 @@ def request_otp(email: str, purpose: str) -> dict:
     expires_at = timezone.now() + timedelta(minutes=OTP_EXPIRY_MINUTES)
     EmailOTP.objects.create(email=email, code=code, purpose=purpose, expires_at=expires_at)
 
-    _send_otp_email(email, code, purpose)
+    email_sent = False
+    try:
+        email_sent = _send_otp_email(email, code, purpose)
+    except ValueError:
+        if not getattr(settings, "OTP_SHOW_IN_API", False):
+            raise
 
     delivery = getattr(settings, "EMAIL_OTP_DELIVERY", "console")
     result = {
@@ -67,16 +72,20 @@ def request_otp(email: str, purpose: str) -> dict:
         "delivery": delivery,
         "message": (
             f"Verification code sent to {email}."
-            if delivery == "smtp"
+            if email_sent
             else f"Verification code logged to server console (configure EMAIL_HOST in .env to send real email)."
         ),
     }
     if getattr(settings, "OTP_SHOW_IN_API", False):
         result["demo_otp"] = code
+        if not email_sent:
+            result["message"] = (
+                f"Email could not be sent. Use demo_otp from this response for {email}."
+            )
     return result
 
 
-def _send_otp_email(email: str, code: str, purpose: str) -> None:
+def _send_otp_email(email: str, code: str, purpose: str) -> bool:
     action = "sign in to TableTop" if purpose == "login" else "complete your TableTop registration"
     subject = "Your TableTop verification code"
 
@@ -113,10 +122,11 @@ def _send_otp_email(email: str, code: str, purpose: str) -> None:
         message.attach_alternative(html_body, "text/html")
         message.send(fail_silently=False)
         logger.info("OTP email sent to %s via %s", email, getattr(settings, "EMAIL_OTP_DELIVERY", "unknown"))
+        return True
     except Exception as exc:
         logger.exception("Failed to send OTP email to %s", email)
         raise ValueError(
-            "Could not send verification email. Check EMAIL_HOST settings in .env and try again."
+            "Could not send verification email. Check Gmail app password on Render or set OTP_SHOW_IN_API=true for testing."
         ) from exc
 
 

@@ -210,13 +210,26 @@ SIMPLE_JWT = {
     'USER_ID_CLAIM': 'user_id',
 }
 
-# CORS — set CORS_ALLOWED_ORIGINS=https://your-app.vercel.app in production
-_cors_origins = [o.strip() for o in _env("CORS_ALLOWED_ORIGINS", "").split(",") if o.strip()]
-if _cors_origins:
-    CORS_ALLOW_ALL_ORIGINS = False
-    CORS_ALLOWED_ORIGINS = _cors_origins
-else:
-    CORS_ALLOW_ALL_ORIGINS = True
+# CORS — allow Vercel frontend (no trailing slash on origins)
+_default_cors = "https://tabletop-restaurant.vercel.app"
+_cors_raw = _env("CORS_ALLOWED_ORIGINS", _default_cors)
+_cors_origins = list(
+    dict.fromkeys(o.strip().rstrip("/") for o in _cors_raw.split(",") if o.strip())
+)
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOWED_ORIGINS = _cors_origins
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://[\w-]+\.vercel\.app$",
+]
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "authorization",
+    "content-type",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
 
 CSRF_TRUSTED_ORIGINS = _cors_origins.copy()
 
@@ -270,6 +283,7 @@ EMAIL_HOST_USER = _env("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = _env("EMAIL_HOST_PASSWORD").replace(" ", "")
 EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").lower() in ("1", "true", "yes")
 EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "False").lower() in ("1", "true", "yes")
+EMAIL_TIMEOUT = int(_env("EMAIL_TIMEOUT", "10"))
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER or "TableTop <noreply@tabletop.local>")
 
 if EMAIL_HOST and EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:

@@ -47,6 +47,11 @@ class RequestOTPView(APIView):
             return Response({'detail': str(exc)}, status=status.HTTP_404_NOT_FOUND)
         except ValueError as exc:
             return Response({'detail': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception:
+            return Response(
+                {'detail': 'Could not send verification code. Try again in a moment.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
         return Response(result)
 
 
