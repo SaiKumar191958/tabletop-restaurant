@@ -2,6 +2,46 @@
 
 Stack: **Vercel** (frontend) + **Render** (Django API) + **Aiven** (free MySQL).
 
+## Host it now (≈20 min)
+
+### Step A — GitHub (required for Render/Vercel)
+
+```bash
+# Create repo on https://github.com/new then:
+git remote add origin https://github.com/YOUR_USERNAME/tabletop-restaurant.git
+git push -u origin main
+```
+
+If `gh` is logged in: `gh auth login` then `gh repo create tabletop-restaurant --public --source=. --push`
+
+### Step B — Render API
+
+1. https://dashboard.render.com → **New +** → **Blueprint**
+2. Connect GitHub repo → Render reads root `render.yaml`
+3. When prompted, set secrets: `DB_PASSWORD`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `DEFAULT_FROM_EMAIL`, `DB_SSL_CA_PEM` (full `certs/ca.pem` text), `CORS_ALLOWED_ORIGINS` (set after Vercel)
+4. After deploy, open **Shell** → `python manage.py seed_demo`
+5. Copy URL: `https://tabletop-api.onrender.com` (name may vary)
+
+Local helper to print env + CA:
+
+```bash
+./scripts/print-render-env.sh
+```
+
+### Step C — Vercel frontend
+
+1. https://vercel.com/new → Import GitHub repo
+2. Root `vercel.json` is already configured
+3. Env: `VITE_API_URL=https://tabletop-api.onrender.com/api/` (your Render URL)
+4. Deploy → copy `https://xxxx.vercel.app`
+5. Render → add `CORS_ALLOWED_ORIGINS=https://xxxx.vercel.app` → redeploy API
+
+### Step D — Test live
+
+Login `user@tabletop.com` → OTP to Gmail → order flow.
+
+---
+
 ## 1. GitHub
 
 Push this repo to GitHub (public or private).
