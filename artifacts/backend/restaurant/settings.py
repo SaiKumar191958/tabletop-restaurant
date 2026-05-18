@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 import os
+import ssl
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -96,32 +97,66 @@ WSGI_APPLICATION = 'restaurant.wsgi.application'
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 
+def _normalize_pem(pem: str) -> str:
+    return pem.replace("\\n", "\n").strip() + "\n"
+
+
+def _pem_is_usable(pem: str) -> bool:
+    """True only if OpenSSL can parse the certificate (avoids PyMySQL cafile errors)."""
+    if "-----BEGIN CERTIFICATE-----" not in pem or "-----END CERTIFICATE-----" not in pem:
+        return False
+    try:
+        ssl.create_default_context(cadata=_normalize_pem(pem))
+        return True
+    except ssl.SSLError:
+        return False
+
+
+def _ssl_context_from_pem(pem: str) -> ssl.SSLContext:
+    return ssl.create_default_context(cadata=_normalize_pem(pem))
+
+
+def _read_pem_file(path: Path) -> str | None:
+    if not path.is_file():
+        return None
+    try:
+        return path.read_text(encoding="utf-8")
+    except OSError:
+        return None
+
+
+def _ssl_options_without_verification() -> dict:
+    """Encrypted connection when no valid CA is available (e.g. mis-set env on Render)."""
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+    return {"ssl": ctx}
+
+
 def _build_mysql_ssl_options() -> dict:
-    """Aiven MySQL requires SSL + CA certificate."""
+    """Aiven MySQL requires SSL; prefer verifying with the service CA certificate."""
     if _env("DB_SSL", "false").lower() not in ("1", "true", "yes"):
         return {}
 
     ca_pem = _env("DB_SSL_CA_PEM", "")
-    if ca_pem:
-        cert_dir = BASE_DIR / "certs"
-        cert_dir.mkdir(exist_ok=True)
-        ca_file = cert_dir / "ca.pem"
-        ca_file.write_text(ca_pem.replace("\\n", "\n").strip() + "\n")
-        return {"ssl": {"ca": str(ca_file)}}
+    if ca_pem and _pem_is_usable(ca_pem):
+        return {"ssl": _ssl_context_from_pem(ca_pem)}
 
     ca_path = _env("DB_SSL_CA", "")
     if ca_path:
         path = Path(ca_path)
         if not path.is_absolute():
             path = BASE_DIR / path
-        if path.is_file():
-            return {"ssl": {"ca": str(path)}}
+        if text := _read_pem_file(path):
+            if _pem_is_usable(text):
+                return {"ssl": _ssl_context_from_pem(text)}
 
     default_ca = BASE_DIR / "certs" / "ca.pem"
-    if default_ca.is_file():
-        return {"ssl": {"ca": str(default_ca)}}
+    if text := _read_pem_file(default_ca):
+        if _pem_is_usable(text):
+            return {"ssl": _ssl_context_from_pem(text)}
 
-    return {"ssl": {"ssl_mode": "REQUIRED"}}
+    return _ssl_options_without_verification()
 
 
 _db_options = _build_mysql_ssl_options()
