@@ -31,10 +31,13 @@ Local helper to print env + CA:
 ### Step C — Vercel frontend
 
 1. https://vercel.com/new → Import GitHub repo
-2. Root `vercel.json` is already configured
-3. Env: `VITE_API_URL=https://tabletop-api.onrender.com/api/` (your Render URL)
-4. Deploy → copy `https://xxxx.vercel.app`
-5. Render → add `CORS_ALLOWED_ORIGINS=https://xxxx.vercel.app` → redeploy API
+2. **Root Directory:** leave as **`.`** (repo root) — **not** `artifacts/mockup-sandbox`
+3. Root `vercel.json` builds **`artifacts/restaurant-app`** (the real TableTop app)
+4. Env: `VITE_API_URL=https://tabletop-api.onrender.com/api/` (your Render URL)
+5. Deploy → copy `https://xxxx.vercel.app`
+6. Render → add `CORS_ALLOWED_ORIGINS=https://xxxx.vercel.app` → redeploy API
+
+> **Do not deploy `artifacts/mockup-sandbox` for production.** That folder is a Replit UI mockup preview tool, not the restaurant app. If you already created a Vercel project with root `artifacts/mockup-sandbox`, delete it or ignore it and create a second project with root **`.`** instead.
 
 ### Step D — Test live
 
