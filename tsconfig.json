@@ -4,13 +4,10 @@
   "files": [],
   "references": [
     {
-      "path": "./lib/db"
+      "path": "./artifacts/restaurant-app"
     },
     {
-      "path": "./lib/api-client-react"
-    },
-    {
-      "path": "./lib/api-zod"
+      "path": "./artifacts/mockup-sandbox"
     }
   ]
 }

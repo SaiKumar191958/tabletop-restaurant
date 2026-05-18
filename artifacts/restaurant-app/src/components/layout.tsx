@@ -1,4 +1,4 @@
-import { Link, useLocation } from "wouter";
+import { Link, useNavigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/lib/auth-context";
 import { useCart } from "@/lib/cart-context";
 import { Button } from "@/components/ui/button";
@@ -13,11 +13,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export function Layout({ children }: { children: React.ReactNode }) {
+export function Layout() {
   return (
     <div className="min-h-[100dvh] flex flex-col w-full bg-background">
       <Navbar />
-      <main className="flex-1 flex flex-col w-full">{children}</main>
+      <main className="flex-1 flex flex-col w-full">
+        <Outlet />
+      </main>
       <Footer />
     </div>
   );
@@ -26,36 +28,44 @@ export function Layout({ children }: { children: React.ReactNode }) {
 function Navbar() {
   const { user, logout } = useAuth();
   const { items } = useCart();
-  const [, setLocation] = useLocation();
+  const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const cartItemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
   const handleLogout = () => {
     logout();
-    setLocation("/");
+    navigate("/");
   };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <div className="flex items-center gap-6">
-          <Link href="/" className="flex items-center gap-2">
+      <div className="page-container h-14 sm:h-16 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-3 sm:gap-6 min-w-0">
+          <Link to="/" className="flex items-center gap-2 min-w-0 shrink-0">
             <div className="bg-primary text-primary-foreground p-1.5 rounded-md">
-              <ShoppingBag className="w-5 h-5" />
+              <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <span className="font-bold text-xl tracking-tight">TableTop</span>
+            <span className="font-bold text-lg sm:text-xl tracking-tight truncate">TableTop</span>
           </Link>
           
           <nav className="hidden md:flex gap-6">
-            <Link href="/" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Home</Link>
-            <Link href="/menu" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Menu</Link>
+            <Link to="/" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Home</Link>
+            <Link to="/menu" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Menu</Link>
           </nav>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
+          <Link to="/cart" className="md:hidden relative p-2 -mr-1">
+            <ShoppingBag className="w-5 h-5" />
+            {cartItemCount > 0 && (
+              <span className="absolute top-0 right-0 bg-primary text-primary-foreground text-[10px] font-bold min-w-4 h-4 px-0.5 rounded-full flex items-center justify-center">
+                {cartItemCount}
+              </span>
+            )}
+          </Link>
           <div className="hidden md:flex items-center gap-4">
-            <Link href="/cart">
+            <Link to="/cart">
               <Button variant="ghost" size="icon" className="relative">
                 <ShoppingBag className="w-5 h-5" />
                 {cartItemCount > 0 && (
@@ -71,8 +81,8 @@ function Navbar() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="gap-2 pl-2">
                     <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center overflow-hidden">
-                      {user.profileImage ? (
-                        <img src={user.profileImage} alt={user.username} className="w-full h-full object-cover" />
+                      {user.profile_image ? (
+                        <img src={user.profile_image} alt={user.username} className="w-full h-full object-cover" />
                       ) : (
                         <UserIcon className="w-4 h-4 text-muted-foreground" />
                       )}
@@ -91,24 +101,24 @@ function Navbar() {
                   <DropdownMenuSeparator />
                   {user.role === "superadmin" && (
                     <DropdownMenuItem asChild>
-                      <Link href="/superadmin/users" className="cursor-pointer w-full">Manage Users</Link>
+                      <Link to="/superadmin/users" className="cursor-pointer w-full">Manage Users</Link>
                     </DropdownMenuItem>
                   )}
                   {(user.role === "admin" || user.role === "superadmin") && (
                     <>
                       <DropdownMenuItem asChild>
-                        <Link href="/admin/dashboard" className="cursor-pointer w-full">Admin Dashboard</Link>
+                        <Link to="/admin/dashboard" className="cursor-pointer w-full">Admin Dashboard</Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                        <Link href="/admin/menu" className="cursor-pointer w-full">Manage Menu</Link>
+                        <Link to="/admin/menu" className="cursor-pointer w-full">Manage Menu</Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                        <Link href="/admin/orders" className="cursor-pointer w-full">Manage Orders</Link>
+                        <Link to="/admin/orders" className="cursor-pointer w-full">Manage Orders</Link>
                       </DropdownMenuItem>
                     </>
                   )}
                   <DropdownMenuItem asChild>
-                    <Link href="/orders" className="cursor-pointer w-full">My Orders</Link>
+                    <Link to="/orders" className="cursor-pointer w-full">My Orders</Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive cursor-pointer">
@@ -119,10 +129,10 @@ function Navbar() {
               </DropdownMenu>
             ) : (
               <div className="flex items-center gap-2">
-                <Link href="/login">
+                <Link to="/login">
                   <Button variant="ghost">Log in</Button>
                 </Link>
-                <Link href="/register">
+                <Link to="/register">
                   <Button>Sign up</Button>
                 </Link>
               </div>
@@ -142,11 +152,11 @@ function Navbar() {
 
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <div className="md:hidden border-t border-border bg-background">
-          <nav className="flex flex-col p-4 gap-4">
-            <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-medium">Home</Link>
-            <Link href="/menu" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-medium">Menu</Link>
-            <Link href="/cart" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-medium flex items-center justify-between">
+        <div className="md:hidden border-t border-border bg-background max-h-[calc(100dvh-3.5rem)] overflow-y-auto">
+          <nav className="flex flex-col p-4 gap-4 pb-6">
+            <Link to="/" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-medium">Home</Link>
+            <Link to="/menu" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-medium">Menu</Link>
+            <Link to="/cart" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-medium flex items-center justify-between">
               Cart
               {cartItemCount > 0 && (
                 <span className="bg-primary text-primary-foreground text-xs font-bold px-2 py-0.5 rounded-full">
@@ -169,16 +179,16 @@ function Navbar() {
                 </div>
                 
                 {user.role === "superadmin" && (
-                  <Link href="/superadmin/users" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-muted-foreground">Manage Users</Link>
+                  <Link to="/superadmin/users" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-muted-foreground">Manage Users</Link>
                 )}
                 {(user.role === "admin" || user.role === "superadmin") && (
                   <>
-                    <Link href="/admin/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-muted-foreground">Admin Dashboard</Link>
-                    <Link href="/admin/menu" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-muted-foreground">Manage Menu</Link>
-                    <Link href="/admin/orders" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-muted-foreground">Manage Orders</Link>
+                    <Link to="/admin/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-muted-foreground">Admin Dashboard</Link>
+                    <Link to="/admin/menu" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-muted-foreground">Manage Menu</Link>
+                    <Link to="/admin/orders" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-muted-foreground">Manage Orders</Link>
                   </>
                 )}
-                <Link href="/orders" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-muted-foreground">My Orders</Link>
+                <Link to="/orders" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-muted-foreground">My Orders</Link>
                 
                 <Button variant="outline" className="w-full justify-start text-destructive" onClick={handleLogout}>
                   <LogOut className="mr-2 h-4 w-4" />
@@ -187,10 +197,10 @@ function Navbar() {
               </>
             ) : (
               <div className="flex flex-col gap-2 pt-2">
-                <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
                   <Button variant="outline" className="w-full">Log in</Button>
                 </Link>
-                <Link href="/register" onClick={() => setIsMobileMenuOpen(false)}>
+                <Link to="/register" onClick={() => setIsMobileMenuOpen(false)}>
                   <Button className="w-full">Sign up</Button>
                 </Link>
               </div>
@@ -204,10 +214,10 @@ function Navbar() {
 
 function Footer() {
   return (
-    <footer className="bg-secondary text-secondary-foreground py-12 mt-auto">
-      <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-8">
+    <footer className="bg-secondary text-secondary-foreground py-10 sm:py-12 mt-auto">
+      <div className="page-container grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
         <div className="md:col-span-2">
-          <Link href="/" className="flex items-center gap-2 mb-4">
+          <Link to="/" className="flex items-center gap-2 mb-4">
             <div className="bg-primary text-primary-foreground p-1.5 rounded-md inline-block">
               <ShoppingBag className="w-5 h-5" />
             </div>
@@ -220,8 +230,8 @@ function Footer() {
         <div>
           <h4 className="font-bold mb-4">Explore</h4>
           <ul className="space-y-2 text-secondary-foreground/70">
-            <li><Link href="/" className="hover:text-primary transition-colors">Home</Link></li>
-            <li><Link href="/menu" className="hover:text-primary transition-colors">Full Menu</Link></li>
+            <li><Link to="/" className="hover:text-primary transition-colors">Home</Link></li>
+            <li><Link to="/menu" className="hover:text-primary transition-colors">Full Menu</Link></li>
           </ul>
         </div>
         <div>

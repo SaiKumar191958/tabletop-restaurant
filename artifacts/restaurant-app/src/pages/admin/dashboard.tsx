@@ -1,4 +1,4 @@
-import { useGetDashboardStats } from "@workspace/api-client-react";
+import { useGetDashboardStats } from "@/lib/api-hooks";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ShoppingBag, DollarSign, Users, UtensilsCrossed, TrendingUp } from "lucide-react";
 
@@ -15,9 +15,9 @@ export default function AdminDashboard() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="page-container py-5 sm:py-8">
+        <h1 className="page-title mb-6">Dashboard</h1>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
           {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-32 rounded-2xl" />)}
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -38,23 +38,23 @@ export default function AdminDashboard() {
   const maxCount = Math.max(...(stats?.orders_by_status?.map((s) => s.count) ?? [1]), 1);
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center gap-3 mb-8">
-        <TrendingUp className="w-7 h-7 text-primary" />
-        <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+    <div className="page-container py-5 sm:py-8">
+      <div className="flex items-center gap-3 mb-6 sm:mb-8">
+        <TrendingUp className="w-6 h-6 sm:w-7 sm:h-7 text-primary shrink-0" />
+        <h1 className="page-title">Dashboard</h1>
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
         {statCards.map((card) => {
           const Icon = card.icon;
           return (
-            <div key={card.label} className="bg-card border border-card-border rounded-2xl p-6">
+            <div key={card.label} className="bg-card border border-card-border rounded-2xl p-4 sm:p-6">
               <div className={`w-12 h-12 ${card.bg} rounded-xl flex items-center justify-center mb-4`}>
                 <Icon className={`w-6 h-6 ${card.color}`} />
               </div>
               <p className="text-muted-foreground text-sm">{card.label}</p>
-              <p className="text-2xl font-bold text-foreground mt-1">{card.value}</p>
+              <p className="text-lg sm:text-2xl font-bold text-foreground mt-1">{card.value}</p>
             </div>
           );
         })}

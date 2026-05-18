@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   useListMenuItems,
   useListCategories,
@@ -6,22 +6,36 @@ import {
   useUpdateMenuItem,
   useDeleteMenuItem,
   getListMenuItemsQueryKey,
-} from "@workspace/api-client-react";
-import { useQueryClient } from "@tanstack/react-query";
+  searchExternalFood,
+  type ExternalFoodResult,
+} from "@/lib/api-hooks";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
 
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit2, Trash2, UtensilsCrossed } from "lucide-react";
-import type { FoodItem } from "@workspace/api-client-react";
+import { Plus, Edit2, Trash2, UtensilsCrossed, Link2, Upload, ImageOff, Search, Loader2, Sparkles } from "lucide-react";
+import type { FoodItem, MenuItemInput } from "@/lib/api-hooks";
 
 type FoodItemType = FoodItem;
+type ImageMode = "none" | "url" | "upload";
 
-const emptyForm = { name: "", description: "", price: "", food_type: "veg" as "veg" | "nonveg", is_available: true, category_id: "", image: "" };
+const emptyForm = {
+  name: "",
+  description: "",
+  price: "",
+  food_type: "veg" as "veg" | "nonveg",
+  is_available: true,
+  category_id: "",
+  image_url: "",
+  imageFile: null as File | null,
+  imageMode: "none" as ImageMode,
+};
 
 export default function AdminMenu() {
   const qc = useQueryClient();
@@ -35,10 +49,29 @@ export default function AdminMenu() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<FoodItemType | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [foodSearch, setFoodSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(foodSearch.trim()), 400);
+    return () => clearTimeout(timer);
+  }, [foodSearch]);
+
+  const { data: externalResults, isFetching: searchLoading } = useQuery({
+    queryKey: ["external-food-search", debouncedSearch],
+    queryFn: () => searchExternalFood(debouncedSearch),
+    enabled: open && !editing && debouncedSearch.length >= 2,
+  });
 
   const invalidate = () => qc.invalidateQueries({ queryKey: getListMenuItemsQueryKey() });
 
-  const openCreate = () => { setEditing(null); setForm(emptyForm); setOpen(true); };
+  const openCreate = () => {
+    setEditing(null);
+    setForm(emptyForm);
+    setFoodSearch("");
+    setDebouncedSearch("");
+    setOpen(true);
+  };
   const openEdit = (item: FoodItemType) => {
     setEditing(item);
     setForm({
@@ -48,21 +81,67 @@ export default function AdminMenu() {
       food_type: item.food_type as "veg" | "nonveg",
       is_available: item.is_available,
       category_id: String(item.category_id),
-      image: item.image ?? "",
+      image_url: item.image ?? "",
+      imageFile: null,
+      imageMode: item.image ? "url" : "none",
     });
+    setFoodSearch("");
+    setDebouncedSearch("");
     setOpen(true);
   };
 
-  const handleSave = () => {
-    const payload = {
+  const applyExternalFood = (item: ExternalFoodResult) => {
+    const matchedCategory = categories?.find(
+      (c) => c.name.toLowerCase() === item.suggested_category.toLowerCase(),
+    );
+    const fallbackCategory = categories?.[0];
+
+    setForm({
+      ...form,
+      name: item.name,
+      description: item.description,
+      image_url: item.image_url,
+      imageMode: "url",
+      imageFile: null,
+      food_type: item.food_type,
+      category_id: String(matchedCategory?.id ?? fallbackCategory?.id ?? ""),
+    });
+    toast({
+      title: "Imported from food database",
+      description: "Review the price and details, then save.",
+    });
+  };
+
+  const buildPayload = (): MenuItemInput => {
+    const base: MenuItemInput = {
       name: form.name,
       description: form.description || undefined,
       price: Number(form.price),
       food_type: form.food_type,
       is_available: form.is_available,
       category_id: Number(form.category_id),
-      image: form.image || undefined,
     };
+
+    if (form.imageMode === "upload" && form.imageFile) {
+      return { ...base, imageFile: form.imageFile };
+    }
+    if (form.imageMode === "url" && form.image_url.trim()) {
+      return { ...base, image_url: form.image_url.trim() };
+    }
+    return { ...base, image_url: "" };
+  };
+
+  const handleSave = () => {
+    if (!form.name.trim() || !form.price || !form.category_id) {
+      toast({ title: "Please fill required fields", variant: "destructive" });
+      return;
+    }
+    if (form.imageMode === "upload" && !form.imageFile && !editing) {
+      toast({ title: "Please select an image file", variant: "destructive" });
+      return;
+    }
+
+    const payload = buildPayload();
 
     if (editing) {
       updateMutation.mutate(
@@ -86,13 +165,13 @@ export default function AdminMenu() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-8">
+    <div className="page-container py-5 sm:py-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
         <div className="flex items-center gap-3">
-          <UtensilsCrossed className="w-7 h-7 text-primary" />
-          <h1 className="text-3xl font-bold">Manage Menu</h1>
+          <UtensilsCrossed className="w-6 h-6 sm:w-7 sm:h-7 text-primary shrink-0" />
+          <h1 className="page-title">Manage Menu</h1>
         </div>
-        <Button onClick={openCreate}>
+        <Button onClick={openCreate} className="w-full sm:w-auto">
           <Plus className="mr-2 w-4 h-4" /> Add Item
         </Button>
       </div>
@@ -100,8 +179,8 @@ export default function AdminMenu() {
       {isLoading ? (
         <p className="text-muted-foreground">Loading...</p>
       ) : (
-        <div className="bg-card border border-card-border rounded-2xl overflow-hidden">
-          <table className="w-full">
+        <div className="bg-card border border-card-border rounded-2xl overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+          <table className="w-full min-w-[32rem]">
             <thead className="bg-muted/50 text-sm text-muted-foreground">
               <tr>
                 <th className="text-left px-6 py-4 font-semibold">Item</th>
@@ -156,11 +235,68 @@ export default function AdminMenu() {
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg w-[calc(100vw-2rem)] sm:w-full max-h-[90dvh] flex flex-col">
           <DialogHeader>
             <DialogTitle>{editing ? "Edit Menu Item" : "Add Menu Item"}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-2">
+          <div className="space-y-4 py-2 overflow-y-auto flex-1 pr-1">
+            {!editing && (
+              <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3">
+                <div className="flex items-center gap-2 text-sm font-semibold text-primary">
+                  <Sparkles className="w-4 h-4" />
+                  Search food database (free)
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Search TheMealDB for dishes. Tap a result to auto-fill, or add manually below if not found.
+                </p>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    value={foodSearch}
+                    onChange={(e) => setFoodSearch(e.target.value)}
+                    placeholder="e.g. burger, pasta, tiramisu..."
+                    className="pl-9"
+                  />
+                </div>
+                {foodSearch.trim().length > 0 && foodSearch.trim().length < 2 && (
+                  <p className="text-xs text-muted-foreground">Type at least 2 characters to search.</p>
+                )}
+                {searchLoading && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Searching...
+                  </div>
+                )}
+                {!searchLoading && debouncedSearch.length >= 2 && externalResults?.length === 0 && (
+                  <p className="text-sm text-muted-foreground py-2">
+                    No matches for &quot;{debouncedSearch}&quot;. Add the item manually below.
+                  </p>
+                )}
+                {externalResults && externalResults.length > 0 && (
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {externalResults.map((item) => (
+                      <button
+                        key={item.external_id}
+                        type="button"
+                        onClick={() => applyExternalFood(item)}
+                        className="w-full flex items-center gap-3 p-2 rounded-lg border border-border bg-card hover:border-primary hover:bg-primary/5 text-left transition-colors"
+                      >
+                        <img src={item.image_url} alt={item.name} className="w-12 h-12 rounded-md object-cover shrink-0 bg-muted" />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm line-clamp-1">{item.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {item.meal_category} · suggests {item.suggested_category}
+                          </p>
+                        </div>
+                        <span className="text-xs font-medium text-primary shrink-0">Use</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <Separator />
+                <p className="text-xs font-medium text-muted-foreground">Or enter details manually</p>
+              </div>
+            )}
             <div className="space-y-2">
               <Label>Name</Label>
               <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Dish name" />
@@ -206,12 +342,65 @@ export default function AdminMenu() {
                 </Select>
               </div>
             </div>
-            <div className="space-y-2">
-              <Label>Image URL (optional)</Label>
-              <Input value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} placeholder="https://..." />
+            <div className="space-y-3">
+              <Label>Image</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {([
+                  { mode: "none" as const, label: "No image", icon: ImageOff },
+                  { mode: "url" as const, label: "URL", icon: Link2 },
+                  { mode: "upload" as const, label: "Upload", icon: Upload },
+                ]).map(({ mode, label, icon: Icon }) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => setForm({ ...form, imageMode: mode, imageFile: null })}
+                    className={`flex flex-col items-center gap-1.5 rounded-lg border p-2.5 text-xs font-medium transition-colors ${
+                      form.imageMode === mode
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border hover:border-primary/50"
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              {form.imageMode === "url" && (
+                <Input
+                  value={form.image_url}
+                  onChange={(e) => setForm({ ...form, image_url: e.target.value })}
+                  placeholder="https://example.com/photo.jpg"
+                />
+              )}
+
+              {form.imageMode === "upload" && (
+                <div className="space-y-2">
+                  <Input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    onChange={(e) => setForm({ ...form, imageFile: e.target.files?.[0] ?? null })}
+                  />
+                  <p className="text-xs text-muted-foreground">JPG, PNG, WebP or GIF (max 5MB recommended)</p>
+                </div>
+              )}
+
+              {(form.image_url || form.imageFile) && (
+                <div className="w-full h-32 rounded-lg bg-muted overflow-hidden border border-border">
+                  {form.imageFile ? (
+                    <img
+                      src={URL.createObjectURL(form.imageFile)}
+                      alt="Preview"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : form.image_url ? (
+                    <img src={form.image_url} alt="Preview" className="w-full h-full object-cover" />
+                  ) : null}
+                </div>
+              )}
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="shrink-0">
             <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
             <Button onClick={handleSave} disabled={createMutation.isPending || updateMutation.isPending}>
               {editing ? "Save Changes" : "Add Item"}

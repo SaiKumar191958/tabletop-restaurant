@@ -2,7 +2,7 @@ import {
   useListUsers,
   useUpdateUserRole,
   getListUsersQueryKey,
-} from "@workspace/api-client-react";
+} from "@/lib/api-hooks";
 import { useQueryClient } from "@tanstack/react-query";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -41,23 +41,23 @@ export default function SuperAdminUsers() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-6">Manage Users</h1>
+      <div className="page-container py-5 sm:py-8">
+        <h1 className="page-title mb-6">Manage Users</h1>
         <div className="space-y-3">{[...Array(5)].map((_, i) => <Skeleton key={i} className="h-16 rounded-xl" />)}</div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center gap-3 mb-8">
-        <Shield className="w-7 h-7 text-primary" />
-        <h1 className="text-3xl font-bold">Manage Users</h1>
-        <span className="text-muted-foreground text-sm ml-2">({users?.length ?? 0})</span>
+    <div className="page-container py-5 sm:py-8">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-6 sm:mb-8">
+        <Shield className="w-6 h-6 sm:w-7 sm:h-7 text-primary shrink-0" />
+        <h1 className="page-title">Manage Users</h1>
+        <span className="text-muted-foreground text-sm">({users?.length ?? 0})</span>
       </div>
 
-      <div className="bg-card border border-card-border rounded-2xl overflow-hidden">
-        <table className="w-full">
+      <div className="bg-card border border-card-border rounded-2xl overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+          <table className="w-full min-w-[32rem]">
           <thead className="bg-muted/50 text-sm text-muted-foreground">
             <tr>
               <th className="text-left px-6 py-4 font-semibold">User</th>

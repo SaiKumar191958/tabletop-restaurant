@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useSearch } from "wouter";
-import { useListMenuItems, useListCategories } from "@workspace/api-client-react";
+import { useListMenuItems, useListCategories } from "@/lib/api-hooks";
 import { useCart } from "@/lib/cart-context";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -44,18 +44,56 @@ export default function MenuPage() {
 
   const hasFilters = selectedCat || foodType || maxPrice || searchQ;
 
+  const filterChip = (active: boolean) =>
+    `shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+      active ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card hover:border-primary"
+    }`;
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-foreground">Full Menu</h1>
-        <p className="text-muted-foreground mt-1">
+    <div className="page-container py-5 sm:py-8">
+      <div className="mb-4 sm:mb-6">
+        <h1 className="page-title">Full Menu</h1>
+        <p className="text-muted-foreground mt-1 text-sm sm:text-base">
           {items ? `${items.length} items available` : "Loading..."}
         </p>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-8">
-        {/* Sidebar filters */}
-        <aside className="lg:w-64 shrink-0">
+      {/* Mobile filters */}
+      <div className="lg:hidden space-y-3 mb-5">
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
+          <button onClick={() => setSelectedCat(null)} className={filterChip(!selectedCat)}>All</button>
+          {categories?.map((cat) => (
+            <button key={cat.id} onClick={() => setSelectedCat(cat.id)} className={filterChip(selectedCat === cat.id)}>
+              {cat.name}
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          {[
+            { val: null, label: "All types" },
+            { val: "veg" as const, label: "Veg" },
+            { val: "nonveg" as const, label: "Non-Veg" },
+          ].map(({ val, label }) => (
+            <button key={label} onClick={() => setFoodType(val)} className={filterChip(foodType === val)}>
+              {label}
+            </button>
+          ))}
+          {[null, 10, 15, 20].map((price) => (
+            <button key={price ?? "any"} onClick={() => setMaxPrice(price)} className={filterChip(maxPrice === price)}>
+              {price === null ? "Any price" : `≤ $${price}`}
+            </button>
+          ))}
+          {hasFilters && (
+            <button onClick={clearFilters} className="text-xs text-primary font-medium px-2 py-1.5">
+              Clear all
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+        {/* Desktop sidebar filters */}
+        <aside className="hidden lg:block lg:w-64 shrink-0">
           <div className="bg-card border border-card-border rounded-2xl p-5 sticky top-24">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2 font-semibold">
@@ -192,13 +230,13 @@ export default function MenuPage() {
                       </span>
                     </div>
                     <p className="text-muted-foreground text-sm line-clamp-2 mb-3">{item.description}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-lg font-bold text-primary">${item.price.toFixed(2)}</span>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-base sm:text-lg font-bold text-primary">${item.price.toFixed(2)}</span>
                       <Button
                         size="sm"
                         onClick={() => handleAddToCart(item)}
                         disabled={!item.is_available}
-                        className="h-8"
+                        className="h-8 shrink-0 text-xs sm:text-sm"
                       >
                         {item.is_available ? "Add to cart" : "Unavailable"}
                       </Button>

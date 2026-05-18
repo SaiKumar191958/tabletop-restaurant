@@ -1,33 +1,28 @@
 import { useAuth } from "./auth-context";
-import { useLocation } from "wouter";
-import { useEffect } from "react";
-import type { UserRole } from "@workspace/api-client-react";
+import { Navigate, useLocation } from "react-router-dom";
 
 export function ProtectedRoute({
   children,
   allowedRoles,
 }: {
   children: React.ReactNode;
-  allowedRoles?: UserRole[];
+  allowedRoles?: ('superadmin' | 'admin' | 'user')[];
 }) {
-  const { user } = useAuth();
-  const [, setLocation] = useLocation();
+  const { user, loading } = useAuth();
+  const location = useLocation();
 
-  useEffect(() => {
-    if (!user) {
-      setLocation("/login");
-      return;
-    }
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
-    if (allowedRoles && !allowedRoles.includes(user.role)) {
-      if (user.role === "superadmin") setLocation("/superadmin/users");
-      else if (user.role === "admin") setLocation("/admin/dashboard");
-      else setLocation("/");
-    }
-  }, [user, allowedRoles, setLocation]);
+  if (!user) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
 
-  if (!user || (allowedRoles && !allowedRoles.includes(user.role))) {
-    return null; // Return null while redirecting
+  if (allowedRoles && !allowedRoles.includes(user.role)) {
+    if (user.role === "superadmin") return <Navigate to="/superadmin/users" replace />;
+    if (user.role === "admin") return <Navigate to="/admin/dashboard" replace />;
+    return <Navigate to="/" replace />;
   }
 
   return <>{children}</>;

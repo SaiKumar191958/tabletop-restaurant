@@ -144,10 +144,33 @@
   * {
     @apply border-border;
   }
+  html {
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
+  }
   body {
-    @apply font-sans antialiased bg-background text-foreground selection:bg-primary/20 selection:text-primary;
+    @apply font-sans antialiased bg-background text-foreground selection:bg-primary/20 selection:text-primary overflow-x-hidden min-w-0;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-sans tracking-tight;
+  }
+  #root {
+    @apply min-h-[100dvh] w-full overflow-x-hidden;
+  }
+}
+
+@layer utilities {
+  .page-container {
+    @apply container mx-auto w-full max-w-7xl px-4 sm:px-6;
+  }
+  .page-title {
+    @apply text-2xl sm:text-3xl font-bold text-foreground;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
 }

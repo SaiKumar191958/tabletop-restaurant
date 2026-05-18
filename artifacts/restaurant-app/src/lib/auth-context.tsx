@@ -1,10 +1,19 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import type { User } from "@workspace/api-client-react";
+import api from "./api";
+
+export interface User {
+  id: number;
+  username: string;
+  email: string;
+  role: 'superadmin' | 'admin' | 'user';
+  phone?: string;
+  profile_image?: string;
+}
 
 interface AuthContextType {
   user: User | null;
-  token: string | null;
-  login: (token: string, user: User) => void;
+  loading: boolean;
+  login: (access: string, refresh: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -12,38 +21,44 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchUser = async () => {
+    try {
+      const response = await api.get('auth/me/');
+      setUser(response.data);
+    } catch (error) {
+      setUser(null);
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const storedToken = localStorage.getItem("restaurant_token");
-    const storedUser = localStorage.getItem("restaurant_user");
-
-    if (storedToken && storedUser) {
-      try {
-        setToken(storedToken);
-        setUser(JSON.parse(storedUser));
-      } catch (e) {
-        console.error("Failed to parse user from local storage");
-      }
+    const token = localStorage.getItem("access_token");
+    if (token) {
+      fetchUser();
+    } else {
+      setLoading(false);
     }
   }, []);
 
-  const login = (newToken: string, newUser: User) => {
-    setToken(newToken);
-    setUser(newUser);
-    localStorage.setItem("restaurant_token", newToken);
-    localStorage.setItem("restaurant_user", JSON.stringify(newUser));
+  const login = async (access: string, refresh: string) => {
+    localStorage.setItem("access_token", access);
+    localStorage.setItem("refresh_token", refresh);
+    await fetchUser();
   };
 
   const logout = () => {
-    setToken(null);
     setUser(null);
-    localStorage.removeItem("restaurant_token");
-    localStorage.removeItem("restaurant_user");
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

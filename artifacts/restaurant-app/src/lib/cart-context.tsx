@@ -19,10 +19,19 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+function normalizeCartItem(item: CartItem): CartItem {
+  return { ...item, price: Number(item.price) };
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>(() => {
     const stored = localStorage.getItem("restaurant_cart");
-    return stored ? JSON.parse(stored) : [];
+    if (!stored) return [];
+    try {
+      return (JSON.parse(stored) as CartItem[]).map(normalizeCartItem);
+    } catch {
+      return [];
+    }
   });
 
   useEffect(() => {
@@ -30,16 +39,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [items]);
 
   const addItem = (item: Omit<CartItem, "quantity">, qty = 1) => {
+    const normalized = normalizeCartItem({ ...item, quantity: qty });
     setItems((current) => {
-      const existing = current.find((i) => i.food_item_id === item.food_item_id);
+      const existing = current.find((i) => i.food_item_id === normalized.food_item_id);
       if (existing) {
         return current.map((i) =>
-          i.food_item_id === item.food_item_id
+          i.food_item_id === normalized.food_item_id
             ? { ...i, quantity: i.quantity + qty }
             : i
         );
       }
-      return [...current, { ...item, quantity: qty }];
+      return [...current, normalized];
     });
   };
 
@@ -59,7 +69,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const clearCart = () => setItems([]);
 
-  const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const total = items.reduce(
+    (sum, item) => sum + Number(item.price) * item.quantity,
+    0,
+  );
 
   return (
     <CartContext.Provider
