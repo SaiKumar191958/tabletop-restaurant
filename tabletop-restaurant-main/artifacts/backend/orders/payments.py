@@ -1,7 +1,10 @@
 """Static (demo) payment processing — mimics Razorpay flow without real API calls."""
 
 import secrets
+
 from django.utils import timezone
+
+from .models import Order
 
 # Test card that simulates failure in demo mode
 DEMO_FAIL_CARD = "4111111111110000"
@@ -15,7 +18,7 @@ def generate_static_order_id() -> str:
     return f"order_static_{secrets.token_hex(8)}"
 
 
-def apply_static_payment(order, payment_method: str, *, card_number: str = "") -> order:
+def apply_static_payment(order: Order, payment_method: str, *, card_number: str = "") -> Order:
     """
     Apply demo payment result to an order after it is created.
 
