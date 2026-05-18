@@ -49,4 +49,4 @@ services:
       - key: CORS_ALLOWED_ORIGINS
         value: https://tabletop-restaurant.vercel.app
       - key: OTP_SHOW_IN_API
-        value: "true"
+        value: "false"

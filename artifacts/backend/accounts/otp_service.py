@@ -76,12 +76,12 @@ def request_otp(email: str, purpose: str) -> dict:
             else f"Verification code logged to server console (configure EMAIL_HOST in .env to send real email)."
         ),
     }
-    if getattr(settings, "OTP_SHOW_IN_API", False):
+    # Only expose OTP in JSON when email failed (debug fallback) — never when mail was sent
+    if not email_sent and getattr(settings, "OTP_SHOW_IN_API", False):
         result["demo_otp"] = code
-        if not email_sent:
-            result["message"] = (
-                f"Email could not be sent. Use demo_otp from this response for {email}."
-            )
+        result["message"] = (
+            f"Email could not be sent. Use demo_otp from this response for {email}."
+        )
     return result
 
 
@@ -126,7 +126,8 @@ def _send_otp_email(email: str, code: str, purpose: str) -> bool:
     except Exception as exc:
         logger.exception("Failed to send OTP email to %s", email)
         raise ValueError(
-            "Could not send verification email. Check Gmail app password on Render or set OTP_SHOW_IN_API=true for testing."
+            "Could not send verification email. On Render, set EMAIL_HOST_USER and a Gmail "
+            "App Password (16 characters) as EMAIL_HOST_PASSWORD, and DEFAULT_FROM_EMAIL to the same Gmail address."
         ) from exc
 
 
