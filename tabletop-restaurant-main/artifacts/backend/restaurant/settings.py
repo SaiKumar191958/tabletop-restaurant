@@ -97,29 +97,32 @@ WSGI_APPLICATION = 'restaurant.wsgi.application'
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 
-def _looks_like_x509_pem(text: str) -> bool:
-    return (
-        "-----BEGIN CERTIFICATE-----" in text
-        and "-----END CERTIFICATE-----" in text
-    )
-
-
 def _normalize_pem(pem: str) -> str:
     return pem.replace("\\n", "\n").strip() + "\n"
 
 
-def _ca_path_if_valid(path: Path) -> Path | None:
+def _pem_is_usable(pem: str) -> bool:
+    """True only if OpenSSL can parse the certificate (avoids PyMySQL cafile errors)."""
+    if "-----BEGIN CERTIFICATE-----" not in pem or "-----END CERTIFICATE-----" not in pem:
+        return False
+    try:
+        ssl.create_default_context(cadata=_normalize_pem(pem))
+        return True
+    except ssl.SSLError:
+        return False
+
+
+def _ssl_context_from_pem(pem: str) -> ssl.SSLContext:
+    return ssl.create_default_context(cadata=_normalize_pem(pem))
+
+
+def _read_pem_file(path: Path) -> str | None:
     if not path.is_file():
         return None
     try:
-        text = path.read_text(encoding="utf-8")
+        return path.read_text(encoding="utf-8")
     except OSError:
         return None
-    return path if _looks_like_x509_pem(text) else None
-
-
-def _ssl_options_with_ca(ca_path: Path) -> dict:
-    return {"ssl": {"ca": str(ca_path)}}
 
 
 def _ssl_options_without_verification() -> dict:
@@ -135,27 +138,23 @@ def _build_mysql_ssl_options() -> dict:
     if _env("DB_SSL", "false").lower() not in ("1", "true", "yes"):
         return {}
 
-    default_ca = BASE_DIR / "certs" / "ca.pem"
-
     ca_pem = _env("DB_SSL_CA_PEM", "")
-    if ca_pem:
-        pem = _normalize_pem(ca_pem)
-        if _looks_like_x509_pem(pem):
-            default_ca.parent.mkdir(parents=True, exist_ok=True)
-            default_ca.write_text(pem, encoding="utf-8")
-            if valid := _ca_path_if_valid(default_ca):
-                return _ssl_options_with_ca(valid)
+    if ca_pem and _pem_is_usable(ca_pem):
+        return {"ssl": _ssl_context_from_pem(ca_pem)}
 
     ca_path = _env("DB_SSL_CA", "")
     if ca_path:
         path = Path(ca_path)
         if not path.is_absolute():
             path = BASE_DIR / path
-        if valid := _ca_path_if_valid(path):
-            return _ssl_options_with_ca(valid)
+        if text := _read_pem_file(path):
+            if _pem_is_usable(text):
+                return {"ssl": _ssl_context_from_pem(text)}
 
-    if valid := _ca_path_if_valid(default_ca):
-        return _ssl_options_with_ca(valid)
+    default_ca = BASE_DIR / "certs" / "ca.pem"
+    if text := _read_pem_file(default_ca):
+        if _pem_is_usable(text):
+            return {"ssl": _ssl_context_from_pem(text)}
 
     return _ssl_options_without_verification()
 
