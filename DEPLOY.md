@@ -20,7 +20,18 @@ If `gh` is logged in: `gh auth login` then `gh repo create tabletop-restaurant -
 2. Connect GitHub repo → Render reads root `render.yaml`
 3. When prompted, set secrets: `DB_PASSWORD`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `DEFAULT_FROM_EMAIL`, `DB_SSL_CA_PEM` (full `certs/ca.pem` text), `CORS_ALLOWED_ORIGINS` (set after Vercel)
 4. After deploy, open **Shell** → `python manage.py seed_demo`
-5. Copy URL: `https://tabletop-api.onrender.com` (name may vary)
+5. Copy URL from Render (e.g. `https://tabletop-api-ze7b.onrender.com` — name may vary)
+
+**If deploy fails with “Exited with status 1”:** open **Logs** → scroll to the first red error. Usually missing `DB_PASSWORD` / `DB_SSL_CA_PEM`, or `migrate` could not reach Aiven. Set all env vars below, push latest `render.yaml` (migrate runs at **start**, not build), then **Manual Deploy → Clear build cache**.
+
+| Variable | Required |
+|----------|----------|
+| `DB_PASSWORD` | Aiven password |
+| `DB_SSL_CA_PEM` | Entire `artifacts/backend/certs/ca.pem` file pasted as one value |
+| `EMAIL_HOST_USER` | Gmail address |
+| `EMAIL_HOST_PASSWORD` | Gmail app password (16 chars) |
+| `DEFAULT_FROM_EMAIL` | Same Gmail |
+| `CORS_ALLOWED_ORIGINS` | Your Vercel URL (after frontend deploy) |
 
 Local helper to print env + CA:
 
