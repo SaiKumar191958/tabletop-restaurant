@@ -281,8 +281,8 @@ EMAIL_PORT = int(_env("EMAIL_PORT", "587"))
 EMAIL_HOST_USER = _env("EMAIL_HOST_USER")
 # Gmail app passwords are often shown with spaces — remove them
 EMAIL_HOST_PASSWORD = _env("EMAIL_HOST_PASSWORD").replace(" ", "")
-EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").lower() in ("1", "true", "yes")
-EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "False").lower() in ("1", "true", "yes")
+EMAIL_USE_TLS = _env("EMAIL_USE_TLS", "True").lower() in ("1", "true", "yes")
+EMAIL_USE_SSL = _env("EMAIL_USE_SSL", "False").lower() in ("1", "true", "yes")
 if EMAIL_PORT == 465:
     EMAIL_USE_TLS = False
     EMAIL_USE_SSL = True
@@ -298,7 +298,7 @@ else:
     EMAIL_OTP_DELIVERY = "console"
 
 # Set OTP_SHOW_IN_API=true only for local debugging without real email
-OTP_SHOW_IN_API = os.getenv("OTP_SHOW_IN_API", "false").lower() in ("1", "true", "yes")
+OTP_SHOW_IN_API = _env("OTP_SHOW_IN_API", "false").lower() in ("1", "true", "yes")
 OTP_LENGTH = 6
 OTP_EXPIRY_MINUTES = 10
 OTP_RESEND_SECONDS = 60

@@ -16,6 +16,9 @@ class Command(BaseCommand):
         self.stdout.write(f"Delivery mode: {delivery}")
         self.stdout.write(f"EMAIL_HOST: {settings.EMAIL_HOST or '(not set)'}")
         self.stdout.write(f"EMAIL_USER: {settings.EMAIL_HOST_USER or '(not set)'}")
+        self.stdout.write(f"EMAIL_PORT: {settings.EMAIL_PORT}")
+        self.stdout.write(f"EMAIL_USE_TLS: {settings.EMAIL_USE_TLS}")
+        self.stdout.write(f"EMAIL_USE_SSL: {settings.EMAIL_USE_SSL}")
         self.stdout.write(f"FROM: {settings.DEFAULT_FROM_EMAIL}")
 
         pwd = settings.EMAIL_HOST_PASSWORD or ""
