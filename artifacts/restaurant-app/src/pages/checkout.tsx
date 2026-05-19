@@ -8,6 +8,7 @@ import {
 } from "@/lib/api-hooks";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCart } from "@/lib/cart-context";
+import { useRestaurant } from "@/lib/restaurant-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -41,11 +42,15 @@ export default function CheckoutPage() {
   const [cardCvv, setCardCvv] = useState("");
 
   const { items, total, clearCart } = useCart();
+  const { config } = useRestaurant();
   const { toast } = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const createOrderMutation = useCreateOrder();
   const { data: paymentConfig } = usePaymentConfig();
+
+  const packingCharge = config?.packing_charge || 20;
+  const grandTotal = total + packingCharge;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,8 +117,8 @@ export default function CheckoutPage() {
 
   const submitLabel =
     paymentMethod === "cod"
-      ? `Place Order (COD) — $${total.toFixed(2)}`
-      : `Pay $${total.toFixed(2)} (Demo)`;
+      ? `Place Order (COD) — ₹${grandTotal.toFixed(2)}`
+      : `Pay ₹${grandTotal.toFixed(2)} (Demo)`;
 
   return (
     <div className="page-container py-5 sm:py-8 max-w-5xl">
@@ -273,10 +278,18 @@ export default function CheckoutPage() {
                     <p className="text-sm font-medium line-clamp-1">{item.name}</p>
                     <p className="text-xs text-muted-foreground">x{item.quantity}</p>
                   </div>
-                  <span className="text-sm font-semibold">${(item.price * item.quantity).toFixed(2)}</span>
+                  <span className="text-sm font-semibold">₹{(item.price * item.quantity).toFixed(2)}</span>
                 </div>
               ))}
               <Separator />
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Subtotal</span>
+                <span className="font-medium">₹{total.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Packing Charge</span>
+                <span className="font-medium">₹{packingCharge.toFixed(2)}</span>
+              </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Delivery</span>
                 <span className="text-green-600 font-medium">Free</span>
@@ -284,7 +297,7 @@ export default function CheckoutPage() {
               <Separator />
               <div className="flex justify-between font-bold text-lg">
                 <span>Total</span>
-                <span className="text-primary">${total.toFixed(2)}</span>
+                <span className="text-primary">₹{grandTotal.toFixed(2)}</span>
               </div>
             </div>
           </div>

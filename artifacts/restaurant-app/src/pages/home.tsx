@@ -3,8 +3,9 @@ import { useState, useEffect } from "react";
 import api from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/lib/cart-context";
+import { useRestaurant } from "@/lib/restaurant-context";
 import { toast } from "react-hot-toast";
-import { Star, Leaf, ArrowRight, ShoppingBag } from "lucide-react";
+import { Star, Leaf, ArrowRight, ShoppingBag, Truck, Info } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface Category {
@@ -29,6 +30,7 @@ export default function Home() {
   const [featLoading, setFeatLoading] = useState(true);
   const [catLoading, setCatLoading] = useState(true);
   const { addItem } = useCart();
+  const { config } = useRestaurant();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -37,8 +39,10 @@ export default function Home() {
           api.get('menu/'),
           api.get('categories/')
         ]);
-        setFeatured(menuRes.data.slice(0, 8)); // Just show first 8 as featured
-        setCategories(catRes.data);
+        const menuData = Array.isArray(menuRes.data) ? menuRes.data : menuRes.data.results ?? [];
+        const catData = Array.isArray(catRes.data) ? catRes.data : catRes.data.results ?? [];
+        setFeatured(menuData.slice(0, 8));
+        setCategories(catData);
       } catch (error) {
         console.error("Failed to fetch home data", error);
       } finally {
@@ -53,6 +57,8 @@ export default function Home() {
     addItem({ food_item_id: item.id, name: item.name, price: item.price, image: item.image });
     toast.success(`${item.name} added to cart`);
   };
+
+  const restaurantName = config?.name || "TableTop";
 
   return (
     <div className="flex flex-col">
@@ -69,27 +75,35 @@ export default function Home() {
         </div>
         <div className="page-container py-12 sm:py-16 md:py-20 relative">
           <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 bg-primary/20 text-primary px-4 py-2 rounded-full text-sm font-semibold mb-6">
-              <ShoppingBag className="w-4 h-4" />
-              Free delivery on first order
+            <div className="flex flex-wrap gap-3 mb-6">
+              <div className="inline-flex items-center gap-2 bg-primary/20 text-primary px-4 py-2 rounded-full text-xs sm:text-sm font-semibold">
+                <ShoppingBag className="w-4 h-4" />
+                {config?.bulk_order_info || "Bulk order available (6hrs advance booking)"}
+              </div>
+              <div className="inline-flex items-center gap-2 bg-primary/20 text-primary px-4 py-2 rounded-full text-xs sm:text-sm font-semibold">
+                <Truck className="w-4 h-4" />
+                {config?.delivery_charge_info || "Delivery charges depend on distance"}
+              </div>
             </div>
             <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold leading-tight mb-4 sm:mb-6">
-              Food that makes you <span className="text-primary">crave</span> more
+              Experience the best flavors at <span className="text-primary">{restaurantName}</span>
             </h1>
             <p className="text-secondary-foreground/70 text-base sm:text-xl mb-6 sm:mb-10 leading-relaxed">
-              Handcrafted meals from top local kitchens. Fresh ingredients, bold flavors, and delivered fast.
+              Handcrafted meals from our kitchen to your table. Fresh ingredients, bold flavors, and delivered fast.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link to="/menu">
                 <Button size="lg" className="w-full sm:w-auto h-12 sm:h-14 px-8 text-base font-semibold">
-                  Browse Menu <ArrowRight className="ml-2 w-5 h-5" />
+                  Order Now <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </Link>
-              <Link to="/register">
-                <Button size="lg" variant="outline" className="w-full sm:w-auto h-12 sm:h-14 px-8 text-base border-secondary-foreground/30 text-secondary-foreground hover:bg-secondary-foreground/10">
-                  Join TableTop
-                </Button>
-              </Link>
+              {!config && (
+                <Link to="/register">
+                  <Button size="lg" variant="outline" className="w-full sm:w-auto h-12 sm:h-14 px-8 text-base border-secondary-foreground/30 text-secondary-foreground hover:bg-secondary-foreground/10">
+                    Join {restaurantName}
+                  </Button>
+                </Link>
+              )}
             </div>
             <div className="grid grid-cols-3 gap-3 sm:flex sm:items-center sm:gap-8 mt-8 sm:mt-12 text-xs sm:text-sm text-secondary-foreground/60">
               <div><span className="font-bold text-secondary-foreground text-lg sm:text-2xl block">4.9</span> avg rating</div>
@@ -99,6 +113,14 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Info Banner */}
+      <div className="bg-primary/10 py-3">
+        <div className="page-container flex items-center justify-center gap-2 text-xs sm:text-sm font-medium text-primary">
+          <Info className="w-4 h-4" />
+          <span>Packing charges: ₹{config?.packing_charge || 20} per order</span>
+        </div>
+      </div>
 
       {/* Categories */}
       <section className="py-10 sm:py-16 page-container">
@@ -112,12 +134,10 @@ export default function Home() {
             {categories?.map((cat) => (
               <Link key={cat.id} to={`/menu?category_id=${cat.id}`}>
                 <div className="group bg-card border border-card-border rounded-2xl p-4 text-center hover:border-primary hover:shadow-lg transition-all cursor-pointer">
-                  <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:bg-primary/20 transition-colors">
-                    <span className="text-2xl">
-                      {cat.name === "Burgers" ? "🍔" : cat.name === "Pizza" ? "🍕" : cat.name === "Pasta" ? "🍝" : cat.name === "Salads" ? "🥗" : cat.name === "Desserts" ? "🍰" : "🥤"}
-                    </span>
+                  <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:bg-primary/20 transition-colors text-2xl">
+                    {cat.name.includes("Main") ? "🍛" : cat.name.includes("Starters") ? "🍗" : cat.name.includes("Combo") ? "🍱" : "🍽️"}
                   </div>
-                  <p className="text-sm font-semibold text-foreground">{cat.name}</p>
+                  <p className="text-sm font-semibold text-foreground truncate">{cat.name}</p>
                 </div>
               </Link>
             ))}
@@ -173,7 +193,7 @@ export default function Home() {
                     <h3 className="font-semibold text-foreground mb-1 line-clamp-1">{item.name}</h3>
                     <p className="text-muted-foreground text-sm line-clamp-2 mb-3">{item.description}</p>
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-base sm:text-lg font-bold text-primary">${Number(item.price).toFixed(2)}</span>
+                      <span className="text-base sm:text-lg font-bold text-primary">₹{Number(item.price).toFixed(2)}</span>
                       <Button size="sm" onClick={() => handleAddToCart(item)} className="h-8 shrink-0 text-xs sm:text-sm">
                         Add to cart
                       </Button>

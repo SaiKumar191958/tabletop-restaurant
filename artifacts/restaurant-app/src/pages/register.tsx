@@ -75,7 +75,7 @@ export default function RegisterPage() {
           <div className="bg-primary-foreground/20 p-4 rounded-2xl inline-block mb-6">
             <ShoppingBag className="w-12 h-12" />
           </div>
-          <h1 className="text-4xl font-bold mb-4">Join TableTop</h1>
+          <h1 className="text-4xl font-bold mb-4">Join Sri Durga Military Hotel</h1>
           <p className="text-primary-foreground/80 text-lg max-w-sm">
             Verify your email with a one-time code — no password needed.
           </p>
@@ -88,7 +88,7 @@ export default function RegisterPage() {
             <div className="bg-primary text-primary-foreground p-1.5 rounded-md">
               <ShoppingBag className="w-5 h-5" />
             </div>
-            <span className="font-bold text-xl">TableTop</span>
+            <span className="font-bold text-xl">Sri Durga Military Hotel</span>
           </div>
 
           <h2 className="text-3xl font-bold text-foreground mb-2">Create account</h2>

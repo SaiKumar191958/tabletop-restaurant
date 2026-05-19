@@ -76,7 +76,7 @@ export default function LoginPage() {
           <div className="bg-primary text-primary-foreground p-4 rounded-2xl inline-block mb-6">
             <ShoppingBag className="w-12 h-12" />
           </div>
-          <h1 className="text-4xl font-bold mb-4">TableTop</h1>
+          <h1 className="text-4xl font-bold mb-4">Sri Durga Military Hotel</h1>
           <p className="text-secondary-foreground/70 text-lg max-w-sm">
             Sign in securely with a one-time code sent to your email.
           </p>
@@ -89,7 +89,7 @@ export default function LoginPage() {
             <div className="bg-primary text-primary-foreground p-1.5 rounded-md">
               <ShoppingBag className="w-5 h-5" />
             </div>
-            <span className="font-bold text-xl">TableTop</span>
+            <span className="font-bold text-xl">Sri Durga Military Hotel</span>
           </div>
 
           <h2 className="text-3xl font-bold text-foreground mb-2">Welcome back</h2>
@@ -164,7 +164,7 @@ export default function LoginPage() {
 
           <div className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">
-              New to TableTop?{" "}
+              New to Sri Durga Military Hotel?{" "}
               <Link to="/register" className="text-primary font-medium hover:underline">
                 Create an account
               </Link>

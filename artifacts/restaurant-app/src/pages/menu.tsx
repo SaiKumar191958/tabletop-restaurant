@@ -78,9 +78,9 @@ export default function MenuPage() {
               {label}
             </button>
           ))}
-          {[null, 10, 15, 20].map((price) => (
+          {[null, 100, 200, 500].map((price) => (
             <button key={price ?? "any"} onClick={() => setMaxPrice(price)} className={filterChip(maxPrice === price)}>
-              {price === null ? "Any price" : `≤ $${price}`}
+              {price === null ? "Any price" : `≤ ₹${price}`}
             </button>
           ))}
           {hasFilters && (
@@ -160,13 +160,13 @@ export default function MenuPage() {
               <div>
                 <p className="text-sm font-semibold mb-2">Max Price</p>
                 <div className="grid grid-cols-2 gap-2">
-                  {[null, 10, 15, 20].map((price) => (
+                  {[null, 100, 200, 500].map((price) => (
                     <button
                       key={price ?? "all"}
                       onClick={() => setMaxPrice(price)}
                       className={`text-xs py-2 px-3 rounded-lg border font-medium transition-colors ${maxPrice === price ? "border-primary bg-primary text-primary-foreground" : "border-border hover:border-primary"}`}
                     >
-                      {price === null ? "Any" : `$${price}`}
+                      {price === null ? "Any" : `₹${price}`}
                     </button>
                   ))}
                 </div>
@@ -231,7 +231,7 @@ export default function MenuPage() {
                     </div>
                     <p className="text-muted-foreground text-sm line-clamp-2 mb-3">{item.description}</p>
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-base sm:text-lg font-bold text-primary">${item.price.toFixed(2)}</span>
+                      <span className="text-base sm:text-lg font-bold text-primary">₹{item.price.toFixed(2)}</span>
                       <Button
                         size="sm"
                         onClick={() => handleAddToCart(item)}

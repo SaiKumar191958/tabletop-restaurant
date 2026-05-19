@@ -24,3 +24,12 @@ class FoodItem(models.Model):
 
     def __str__(self):
         return self.name
+
+class RestaurantConfig(models.Model):
+    name = models.CharField(max_length=200, default="Sri Durga Military Hotel")
+    packing_charge = models.DecimalField(max_digits=8, decimal_places=2, default=20.00)
+    delivery_charge_info = models.CharField(max_length=255, default="Delivery charges depend on distance")
+    bulk_order_info = models.CharField(max_length=255, default="Bulk order available (6hrs advance booking)")
+
+    def __str__(self):
+        return self.name

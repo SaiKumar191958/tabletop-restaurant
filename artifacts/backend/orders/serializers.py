@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import Order, OrderItem
 from .payments import apply_static_payment
-from menu.models import FoodItem
+from menu.models import FoodItem, RestaurantConfig
 from menu.serializers import FoodItemSerializer
 
 class OrderItemSerializer(serializers.ModelSerializer):
@@ -29,12 +29,14 @@ class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = (
-            'id', 'user', 'status', 'total_price', 'created_at', 'address', 'items',
+            'id', 'user', 'status', 'total_price', 'packing_charge', 'delivery_charge',
+            'created_at', 'address', 'items',
             'payment_method', 'payment_status', 'payment_provider', 'payment_reference',
             'paid_at', 'card_number',
         )
         read_only_fields = (
-            'user', 'total_price', 'status', 'payment_status', 'payment_provider',
+            'user', 'total_price', 'packing_charge', 'delivery_charge',
+            'status', 'payment_status', 'payment_provider',
             'payment_reference', 'paid_at',
         )
 
@@ -55,11 +57,24 @@ class OrderSerializer(serializers.ModelSerializer):
         validated_data.pop('paid_at', None)
         user = self.context['request'].user
 
-        total_price = sum(
+        # Get restaurant config for charges
+        config = RestaurantConfig.objects.first()
+        packing_charge = config.packing_charge if config else 20.00
+        delivery_charge = 0.00 # Default for now, can be updated later
+
+        subtotal = sum(
             item_data['food_item'].price * item_data['quantity']
             for item_data in items_data
         )
-        order = Order.objects.create(user=user, total_price=total_price, **validated_data)
+        total_price = subtotal + packing_charge + delivery_charge
+
+        order = Order.objects.create(
+            user=user, 
+            total_price=total_price, 
+            packing_charge=packing_charge,
+            delivery_charge=delivery_charge,
+            **validated_data
+        )
 
         for item_data in items_data:
             food_item = item_data['food_item']

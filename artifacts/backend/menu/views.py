@@ -1,10 +1,35 @@
 from rest_framework import viewsets, permissions, parsers
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .models import Category, FoodItem
-from .serializers import CategorySerializer, FoodItemSerializer
+from .models import Category, FoodItem, RestaurantConfig
+from .serializers import CategorySerializer, FoodItemSerializer, RestaurantConfigSerializer
 from .external_search import search_external_foods
 from accounts.permissions import IsAdminOrSuperAdmin
+
+class RestaurantConfigView(APIView):
+    permission_classes = (permissions.AllowAny,)
+
+    def get(self, request):
+        config = RestaurantConfig.objects.first()
+        if not config:
+            config = RestaurantConfig.objects.create()
+        serializer = RestaurantConfigSerializer(config)
+        return Response(serializer.data)
+
+    def patch(self, request):
+        # Admin only for updates
+        if not request.user.is_authenticated or not (request.user.role in ['admin', 'superadmin']):
+            return Response({"error": "Unauthorized"}, status=403)
+        
+        config = RestaurantConfig.objects.first()
+        if not config:
+            config = RestaurantConfig.objects.create()
+        
+        serializer = RestaurantConfigSerializer(config, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()

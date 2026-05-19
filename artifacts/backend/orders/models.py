@@ -23,6 +23,8 @@ class Order(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     status = models.CharField(max_length=20, choices=STATUS, default='pending')
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
+    packing_charge = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    delivery_charge = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     created_at = models.DateTimeField(auto_now_add=True)
     address = models.TextField()
     payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD, default='cod')

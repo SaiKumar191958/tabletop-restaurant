@@ -104,8 +104,8 @@ def request_otp(email: str, purpose: str) -> dict:
 
 
 def _send_otp_email(email: str, code: str, purpose: str) -> bool:
-    action = "sign in to TableTop" if purpose == "login" else "complete your TableTop registration"
-    subject = "Your TableTop verification code"
+    action = "sign in to Sri Durga Military Hotel" if purpose == "login" else "complete your Sri Durga Military Hotel registration"
+    subject = "Your Sri Durga Military Hotel verification code"
 
     text_body = (
         f"Hello,\n\n"
@@ -113,12 +113,12 @@ def _send_otp_email(email: str, code: str, purpose: str) -> bool:
         f"    {code}\n\n"
         f"This code expires in {OTP_EXPIRY_MINUTES} minutes.\n"
         f"If you did not request this, you can safely ignore this email.\n\n"
-        f"— TableTop"
+        f"— Sri Durga Military Hotel"
     )
 
     html_body = f"""
     <div style="font-family: system-ui, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
-      <h2 style="color: #e85d04; margin-bottom: 8px;">TableTop</h2>
+      <h2 style="color: #e85d04; margin-bottom: 8px;">Sri Durga Military Hotel</h2>
       <p style="color: #444;">Your verification code to {action}:</p>
       <p style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #111;
          background: #f5f5f5; padding: 16px 24px; border-radius: 8px; text-align: center;">

@@ -161,17 +161,25 @@ def _build_mysql_ssl_options() -> dict:
 
 _db_options = _build_mysql_ssl_options()
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': _env('DB_NAME', 'restaurant_db'),
-        'USER': _env('DB_USER', 'root'),
-        'PASSWORD': _env('DB_PASSWORD', 'newpassword'),
-        'HOST': _env('DB_HOST', 'localhost'),
-        'PORT': _env('DB_PORT', '3306'),
-        **({'OPTIONS': _db_options} if _db_options else {}),
+if _env('USE_SQLITE', 'False').lower() == 'true' or not _env('DB_NAME', ''):
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': _env('DB_NAME', 'restaurant_db'),
+            'USER': _env('DB_USER', 'root'),
+            'PASSWORD': _env('DB_PASSWORD', 'newpassword'),
+            'HOST': _env('DB_HOST', 'localhost'),
+            'PORT': _env('DB_PORT', '3306'),
+            **({'OPTIONS': _db_options} if _db_options else {}),
+        }
+    }
 
 # Custom User Model
 AUTH_USER_MODEL = 'accounts.CustomUser'

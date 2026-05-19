@@ -1,11 +1,16 @@
 import { Link } from "react-router-dom";
 import { useCart } from "@/lib/cart-context";
+import { useRestaurant } from "@/lib/restaurant-context";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Minus, Plus, Trash2, ShoppingBag, ArrowRight } from "lucide-react";
 
 export default function CartPage() {
   const { items, updateQty, removeItem, total } = useCart();
+  const { config } = useRestaurant();
+
+  const packingCharge = config?.packing_charge || 20;
+  const grandTotal = total + packingCharge;
 
   if (items.length === 0) {
     return (
@@ -46,7 +51,7 @@ export default function CartPage() {
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-foreground line-clamp-2 sm:line-clamp-1">{item.name}</h3>
                   <p className="text-primary font-semibold mt-1 text-sm sm:text-base">
-                    ${Number(item.price).toFixed(2)} each
+                    ₹{Number(item.price).toFixed(2)} each
                   </p>
                 </div>
               </div>
@@ -71,7 +76,7 @@ export default function CartPage() {
                 </div>
                 <div className="flex items-center gap-3">
                   <p className="font-bold text-foreground text-base sm:text-lg">
-                    ${(Number(item.price) * item.quantity).toFixed(2)}
+                    ₹{(Number(item.price) * item.quantity).toFixed(2)}
                   </p>
                   <button
                     onClick={() => removeItem(item.food_item_id)}
@@ -93,13 +98,17 @@ export default function CartPage() {
               {items.map((item) => (
                 <div key={item.food_item_id} className="flex justify-between text-sm gap-2">
                   <span className="text-muted-foreground line-clamp-1 flex-1">{item.name} x{item.quantity}</span>
-                  <span className="font-medium shrink-0">${(Number(item.price) * item.quantity).toFixed(2)}</span>
+                  <span className="font-medium shrink-0">₹{(Number(item.price) * item.quantity).toFixed(2)}</span>
                 </div>
               ))}
               <Separator />
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Subtotal</span>
-                <span>${total.toFixed(2)}</span>
+                <span>₹{total.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Packing Charge</span>
+                <span>₹{packingCharge.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Delivery</span>
@@ -108,7 +117,7 @@ export default function CartPage() {
               <Separator />
               <div className="flex justify-between font-bold text-lg">
                 <span>Total</span>
-                <span className="text-primary">${total.toFixed(2)}</span>
+                <span className="text-primary">₹{grandTotal.toFixed(2)}</span>
               </div>
             </div>
             <Link to="/checkout">

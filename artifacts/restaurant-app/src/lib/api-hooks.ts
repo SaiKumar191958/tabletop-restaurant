@@ -35,10 +35,19 @@ export interface OrderItem {
 export type PaymentMethod = "cod" | "upi" | "card";
 export type PaymentStatus = "unpaid" | "paid" | "failed";
 
+export interface RestaurantConfig {
+  name: string;
+  packing_charge: number;
+  delivery_charge_info: string;
+  bulk_order_info: string;
+}
+
 export interface Order {
   id: number;
   status: string;
   total_price: number;
+  packing_charge: number;
+  delivery_charge: number;
   created_at: string;
   address: string;
   items?: OrderItem[];
@@ -151,6 +160,8 @@ function normalizeOrder(raw: Record<string, unknown>): Order {
     id: Number(raw.id),
     status: String(raw.status),
     total_price: Number(raw.total_price),
+    packing_charge: Number(raw.packing_charge ?? 0),
+    delivery_charge: Number(raw.delivery_charge ?? 0),
     created_at: String(raw.created_at),
     address: String(raw.address),
     payment_method: raw.payment_method as PaymentMethod | undefined,
@@ -455,6 +466,20 @@ export function useUpdateOrderStatus(
       return normalizeOrder(res);
     },
     ...options,
+  });
+}
+
+export function useUpdateUserRole(
+  options?: UseMutationOptions<User, Error, { id: number; data: { role: string } }>,
+) {
+  return useMutation({
+    mutationFn: async ({ id, data }) => {
+      const { data: res } = await api.patch(`admin/users/${id}/role/`, data);
+      return normalizeUser(res);
+    },
+    ...options,
+  });
+}
   });
 }
 

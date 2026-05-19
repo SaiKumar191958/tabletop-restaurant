@@ -1,6 +1,7 @@
 import { Link, useNavigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/lib/auth-context";
 import { useCart } from "@/lib/cart-context";
+import { useRestaurant } from "@/lib/restaurant-context";
 import { Button } from "@/components/ui/button";
 import { ShoppingBag, User as UserIcon, Menu as MenuIcon, X, LogOut, ChevronDown } from "lucide-react";
 import { useState } from "react";
@@ -28,6 +29,7 @@ export function Layout() {
 function Navbar() {
   const { user, logout } = useAuth();
   const { items } = useCart();
+  const { config } = useRestaurant();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -38,6 +40,8 @@ function Navbar() {
     navigate("/");
   };
 
+  const restaurantName = config?.name || "TableTop";
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="page-container h-14 sm:h-16 flex items-center justify-between gap-2">
@@ -46,7 +50,7 @@ function Navbar() {
             <div className="bg-primary text-primary-foreground p-1.5 rounded-md">
               <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <span className="font-bold text-lg sm:text-xl tracking-tight truncate">TableTop</span>
+            <span className="font-bold text-lg sm:text-xl tracking-tight truncate">{restaurantName}</span>
           </Link>
           
           <nav className="hidden md:flex gap-6">
@@ -213,6 +217,9 @@ function Navbar() {
 }
 
 function Footer() {
+  const { config } = useRestaurant();
+  const restaurantName = config?.name || "TableTop";
+
   return (
     <footer className="bg-secondary text-secondary-foreground py-10 sm:py-12 mt-auto">
       <div className="page-container grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
@@ -221,7 +228,7 @@ function Footer() {
             <div className="bg-primary text-primary-foreground p-1.5 rounded-md inline-block">
               <ShoppingBag className="w-5 h-5" />
             </div>
-            <span className="font-bold text-2xl tracking-tight">TableTop</span>
+            <span className="font-bold text-2xl tracking-tight">{restaurantName}</span>
           </Link>
           <p className="text-secondary-foreground/70 max-w-sm">
             Bringing the best flavors from your favorite local kitchens right to your door. Fast, fresh, and always satisfying.

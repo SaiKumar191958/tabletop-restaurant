@@ -16,7 +16,7 @@ from accounts.dashboard import DashboardStatsView
 from orders.views import OrderCreateListView, AdminOrderListView, OrderStatusUpdateView
 from orders.payment_views import PaymentConfigView
 from rest_framework.routers import DefaultRouter
-from menu.views import CategoryViewSet, FoodItemViewSet, ExternalFoodSearchView
+from menu.views import CategoryViewSet, FoodItemViewSet, ExternalFoodSearchView, RestaurantConfigView
 
 router = DefaultRouter()
 router.register(r'categories', CategoryViewSet)
@@ -24,6 +24,7 @@ router.register(r'menu', FoodItemViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/restaurant/config/', RestaurantConfigView.as_view(), name='restaurant_config'),
     # Before router — otherwise menu/<pk> captures "search-external"
     path('api/menu/search-external/', ExternalFoodSearchView.as_view(), name='menu_search_external'),
     path('api/', include(router.urls)),

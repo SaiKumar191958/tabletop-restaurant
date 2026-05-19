@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Category, FoodItem
+from .models import Category, FoodItem, RestaurantConfig
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -43,3 +43,8 @@ class FoodItemSerializer(serializers.ModelSerializer):
         else:
             data['image'] = None
         return data
+
+class RestaurantConfigSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RestaurantConfig
+        fields = '__all__'
