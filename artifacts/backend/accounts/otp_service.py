@@ -3,6 +3,7 @@ import random
 import string
 from datetime import timedelta
 
+import resend
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.utils import timezone
@@ -14,6 +15,9 @@ logger = logging.getLogger(__name__)
 OTP_EXPIRY_MINUTES = getattr(settings, "OTP_EXPIRY_MINUTES", 10)
 OTP_LENGTH = getattr(settings, "OTP_LENGTH", 6)
 OTP_RESEND_SECONDS = getattr(settings, "OTP_RESEND_SECONDS", 60)
+
+if getattr(settings, "RESEND_API_KEY", None):
+    resend.api_key = settings.RESEND_API_KEY
 
 
 def _generate_code() -> str:
@@ -113,6 +117,20 @@ def _send_otp_email(email: str, code: str, purpose: str) -> bool:
     """
 
     try:
+        delivery_mode = getattr(settings, "EMAIL_OTP_DELIVERY", "console")
+
+        if delivery_mode == "resend":
+            params = {
+                "from": settings.DEFAULT_FROM_EMAIL or "onboarding@resend.dev",
+                "to": [email],
+                "subject": subject,
+                "html": html_body,
+                "text": text_body,
+            }
+            resend.Emails.send(params)
+            logger.info("OTP email sent to %s via Resend API", email)
+            return True
+
         message = EmailMultiAlternatives(
             subject=subject,
             body=text_body,
@@ -121,12 +139,12 @@ def _send_otp_email(email: str, code: str, purpose: str) -> bool:
         )
         message.attach_alternative(html_body, "text/html")
         message.send(fail_silently=False)
-        logger.info("OTP email sent to %s via %s", email, getattr(settings, "EMAIL_OTP_DELIVERY", "unknown"))
+        logger.info("OTP email sent to %s via %s", email, delivery_mode)
         return True
     except Exception as exc:
         logger.exception("Failed to send OTP email to %s", email)
-        # Return the actual error message to help the user debug SMTP issues
-        raise ValueError(f"SMTP Error: {str(exc)}") from exc
+        # Return the actual error message to help the user debug SMTP/API issues
+        raise ValueError(f"Email Delivery Error: {str(exc)}") from exc
 
 
 def verify_otp(

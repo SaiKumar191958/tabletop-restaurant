@@ -290,7 +290,13 @@ EMAIL_TIMEOUT = int(_env("EMAIL_TIMEOUT", "25"))
 # Gmail requires FROM to match the authenticated account (plain address works best)
 DEFAULT_FROM_EMAIL = _env("DEFAULT_FROM_EMAIL", "") or EMAIL_HOST_USER or "noreply@tabletop.local"
 
-if EMAIL_HOST and EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:
+# Resend API (Preferred for Render to bypass SMTP blocks)
+RESEND_API_KEY = _env("RESEND_API_KEY")
+
+if RESEND_API_KEY:
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+    EMAIL_OTP_DELIVERY = "resend"
+elif EMAIL_HOST and EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:
     EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
     EMAIL_OTP_DELIVERY = "smtp"
 else:
