@@ -55,11 +55,25 @@ def request_otp(email: str, purpose: str) -> dict:
             wait = int(OTP_RESEND_SECONDS - elapsed)
             raise ValueError(f"Please wait {wait}s before requesting another code.")
 
-    EmailOTP.objects.filter(email=email, purpose=purpose, is_used=False).update(is_used=True)
+    # Specific test accounts can use a static code
+    test_emails = ["user@tabletop.com", "admin@tabletop.com", "super@tabletop.com"]
+    if email in test_emails:
+        code = "123456"
+    else:
+        code = _generate_code()
 
-    code = _generate_code()
     expires_at = timezone.now() + timedelta(minutes=OTP_EXPIRY_MINUTES)
     EmailOTP.objects.create(email=email, code=code, purpose=purpose, expires_at=expires_at)
+
+    # Skip real email for test accounts
+    if email in test_emails:
+        return {
+            "email": email,
+            "purpose": purpose,
+            "expires_in_minutes": OTP_EXPIRY_MINUTES,
+            "delivery": "static",
+            "message": f"Test account detected. Use code 123456 for {email}.",
+        }
 
     email_sent = False
     try:
