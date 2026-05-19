@@ -212,7 +212,23 @@ export const getDashboardStatsQueryKey = () => ["admin", "dashboard"] as const;
 
 export const getPaymentConfigQueryKey = () => ["payments", "config"] as const;
 
+export const getRestaurantConfigQueryKey = () => ["restaurant", "config"] as const;
+
 // ——— Queries ———
+
+export function useRestaurantConfig(
+  options?: Omit<UseQueryOptions<RestaurantConfig>, "queryKey" | "queryFn">,
+) {
+  return useQuery({
+    queryKey: getRestaurantConfigQueryKey(),
+    queryFn: async () => {
+      const { data } = await api.get<RestaurantConfig>("restaurant/config/");
+      return data;
+    },
+    staleTime: 300_000,
+    ...options,
+  });
+}
 
 export function usePaymentConfig(
   options?: Omit<UseQueryOptions<PaymentConfig>, "queryKey" | "queryFn">,
@@ -466,20 +482,6 @@ export function useUpdateOrderStatus(
       return normalizeOrder(res);
     },
     ...options,
-  });
-}
-
-export function useUpdateUserRole(
-  options?: UseMutationOptions<User, Error, { id: number; data: { role: string } }>,
-) {
-  return useMutation({
-    mutationFn: async ({ id, data }) => {
-      const { data: res } = await api.patch(`admin/users/${id}/role/`, data);
-      return normalizeUser(res);
-    },
-    ...options,
-  });
-}
   });
 }
 
