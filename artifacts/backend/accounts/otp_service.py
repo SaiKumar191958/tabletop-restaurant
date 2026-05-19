@@ -125,10 +125,8 @@ def _send_otp_email(email: str, code: str, purpose: str) -> bool:
         return True
     except Exception as exc:
         logger.exception("Failed to send OTP email to %s", email)
-        raise ValueError(
-            "Could not send verification email. On Render, set EMAIL_HOST_USER and a Gmail "
-            "App Password (16 characters) as EMAIL_HOST_PASSWORD, and DEFAULT_FROM_EMAIL to the same Gmail address."
-        ) from exc
+        # Return the actual error message to help the user debug SMTP issues
+        raise ValueError(f"SMTP Error: {str(exc)}") from exc
 
 
 def verify_otp(
