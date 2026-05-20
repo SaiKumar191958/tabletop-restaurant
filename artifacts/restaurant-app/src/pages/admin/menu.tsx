@@ -137,12 +137,20 @@ export default function AdminMenu() {
     if (editingItem) {
       updateItem.mutate({ id: editingItem.id, data: payload }, {
         onSuccess: () => { invalidateItems(); setItemOpen(false); toast({ title: "Item updated" }); },
-        onError: () => toast({ title: "Failed to update", variant: "destructive" })
+        onError: (err: any) => {
+          const data = err.response?.data;
+          const msg = typeof data === 'object' ? Object.entries(data).map(([k, v]) => `${k}: ${v}`).join(", ") : "Failed to update";
+          toast({ title: "Update Failed", description: msg, variant: "destructive" });
+        }
       });
     } else {
       createItem.mutate({ data: payload }, {
         onSuccess: () => { invalidateItems(); setItemOpen(false); toast({ title: "Item created" }); },
-        onError: () => toast({ title: "Failed to create", variant: "destructive" })
+        onError: (err: any) => {
+          const data = err.response?.data;
+          const msg = typeof data === 'object' ? Object.entries(data).map(([k, v]) => `${k}: ${v}`).join(", ") : "Failed to create";
+          toast({ title: "Creation Failed", description: msg, variant: "destructive" });
+        }
       });
     }
   };
@@ -186,12 +194,20 @@ export default function AdminMenu() {
     if (editingCat) {
       updateCat.mutate({ id: editingCat.id, data: payload }, {
         onSuccess: () => { invalidateCats(); setCatOpen(false); toast({ title: "Category updated" }); },
-        onError: () => toast({ title: "Failed to update", variant: "destructive" })
+        onError: (err: any) => {
+          const data = err.response?.data;
+          const msg = typeof data === 'object' ? Object.entries(data).map(([k, v]) => `${k}: ${v}`).join(", ") : "Failed to update";
+          toast({ title: "Update Failed", description: msg, variant: "destructive" });
+        }
       });
     } else {
       createCat.mutate({ data: payload }, {
         onSuccess: () => { invalidateCats(); setCatOpen(false); toast({ title: "Category created" }); },
-        onError: () => toast({ title: "Failed to create", variant: "destructive" })
+        onError: (err: any) => {
+          const data = err.response?.data;
+          const msg = typeof data === 'object' ? Object.entries(data).map(([k, v]) => `${k}: ${v}`).join(", ") : "Failed to create";
+          toast({ title: "Creation Failed", description: msg, variant: "destructive" });
+        }
       });
     }
   };
