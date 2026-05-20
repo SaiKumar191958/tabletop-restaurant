@@ -416,7 +416,15 @@ export default function AdminMenu() {
               {itemForm.imageMode === "upload" && <Input type="file" onChange={e => setItemForm({...itemForm, imageFile: e.target.files?.[0] ?? null})} />}
             </div>
           </div>
-          <DialogFooter className="shrink-0"><Button variant="outline" onClick={() => setItemOpen(false)}>Cancel</Button><Button onClick={handleSaveItem}>Save</Button></DialogFooter>
+          <DialogFooter className="shrink-0">
+            <Button variant="outline" onClick={() => setItemOpen(false)} disabled={createItem.isPending || updateItem.isPending}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveItem} disabled={createItem.isPending || updateItem.isPending}>
+              {(createItem.isPending || updateItem.isPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {editingItem ? "Update Item" : "Create Item"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -442,7 +450,15 @@ export default function AdminMenu() {
               {catForm.imageMode === "upload" && <Input type="file" onChange={e => setCatForm({...catForm, imageFile: e.target.files?.[0] ?? null})} />}
             </div>
           </div>
-          <DialogFooter><Button variant="outline" onClick={() => setCatOpen(false)}>Cancel</Button><Button onClick={handleSaveCat}>Save</Button></DialogFooter>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCatOpen(false)} disabled={createCat.isPending || updateCat.isPending}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveCat} disabled={createCat.isPending || updateCat.isPending}>
+              {(createCat.isPending || updateCat.isPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {editingCat ? "Update Category" : "Create Category"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
