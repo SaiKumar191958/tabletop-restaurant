@@ -58,7 +58,7 @@ export default function Home() {
     toast.success(`${item.name} added to cart`);
   };
 
-  const restaurantName = config?.name || "TableTop";
+  const restaurantName = config?.name || "Sri Durga Military Hotel";
 
   return (
     <div className="flex flex-col">

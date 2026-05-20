@@ -40,7 +40,7 @@ function Navbar() {
     navigate("/");
   };
 
-  const restaurantName = config?.name || "TableTop";
+  const restaurantName = config?.name || "Sri Durga Military Hotel";
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -218,7 +218,7 @@ function Navbar() {
 
 function Footer() {
   const { config } = useRestaurant();
-  const restaurantName = config?.name || "TableTop";
+  const restaurantName = config?.name || "Sri Durga Military Hotel";
 
   return (
     <footer className="bg-secondary text-secondary-foreground py-10 sm:py-12 mt-auto">

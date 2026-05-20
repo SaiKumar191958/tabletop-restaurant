@@ -296,7 +296,7 @@ if EMAIL_PORT == 465:
     EMAIL_USE_SSL = True
 EMAIL_TIMEOUT = int(_env("EMAIL_TIMEOUT", "25"))
 # Gmail requires FROM to match the authenticated account (plain address works best)
-DEFAULT_FROM_EMAIL = _env("DEFAULT_FROM_EMAIL", "") or EMAIL_HOST_USER or "noreply@tabletop.local"
+DEFAULT_FROM_EMAIL = _env("DEFAULT_FROM_EMAIL", "") or EMAIL_HOST_USER or "noreply@sridurgahotel.local"
 
 # Resend API (Preferred for Render to bypass SMTP blocks)
 RESEND_API_KEY = _env("RESEND_API_KEY")
