@@ -5,7 +5,11 @@ import {
   useCreateMenuItem,
   useUpdateMenuItem,
   useDeleteMenuItem,
+  useCreateCategory,
+  useUpdateCategory,
+  useDeleteCategory,
   getListMenuItemsQueryKey,
+  getListCategoriesQueryKey,
   searchExternalFood,
   type ExternalFoodResult,
 } from "@/lib/api-hooks";
@@ -17,15 +21,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit2, Trash2, UtensilsCrossed, Link2, Upload, ImageOff, Search, Loader2, Sparkles } from "lucide-react";
-import type { FoodItem, MenuItemInput } from "@/lib/api-hooks";
+import { Plus, Edit2, Trash2, UtensilsCrossed, Link2, Upload, ImageOff, Search, Loader2, Sparkles, FolderTree } from "lucide-react";
+import type { FoodItem, MenuItemInput, Category, CategoryInput } from "@/lib/api-hooks";
 
-type FoodItemType = FoodItem;
 type ImageMode = "none" | "url" | "upload";
 
-const emptyForm = {
+const emptyItemForm = {
   name: "",
   description: "",
   price: "",
@@ -37,18 +41,38 @@ const emptyForm = {
   imageMode: "none" as ImageMode,
 };
 
+const emptyCatForm = {
+  name: "",
+  image_url: "",
+  imageFile: null as File | null,
+  imageMode: "none" as ImageMode,
+};
+
 export default function AdminMenu() {
   const qc = useQueryClient();
-  const { data: items, isLoading } = useListMenuItems();
-  const { data: categories } = useListCategories();
-  const createMutation = useCreateMenuItem();
-  const updateMutation = useUpdateMenuItem();
-  const deleteMutation = useDeleteMenuItem();
+  const { data: items, isLoading: itemsLoading } = useListMenuItems();
+  const { data: categories, isLoading: catsLoading } = useListCategories();
+  
+  const createItem = useCreateMenuItem();
+  const updateItem = useUpdateMenuItem();
+  const deleteItem = useDeleteMenuItem();
+  
+  const createCat = useCreateCategory();
+  const updateCat = useUpdateCategory();
+  const deleteCat = useDeleteCategory();
+  
   const { toast } = useToast();
 
-  const [open, setOpen] = useState(false);
-  const [editing, setEditing] = useState<FoodItemType | null>(null);
-  const [form, setForm] = useState(emptyForm);
+  const [activeTab, setActiveTab] = useState("items");
+  const [itemDialogOpen, setItemOpen] = useState(false);
+  const [catDialogOpen, setCatOpen] = useState(false);
+  
+  const [editingItem, setEditingItem] = useState<FoodItem | null>(null);
+  const [itemForm, setItemForm] = useState(emptyItemForm);
+  
+  const [editingCat, setEditingCat] = useState<Category | null>(null);
+  const [catForm, setCatForm] = useState(emptyCatForm);
+
   const [foodSearch, setFoodSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
@@ -60,21 +84,23 @@ export default function AdminMenu() {
   const { data: externalResults, isFetching: searchLoading } = useQuery({
     queryKey: ["external-food-search", debouncedSearch],
     queryFn: () => searchExternalFood(debouncedSearch),
-    enabled: open && !editing && debouncedSearch.length >= 2,
+    enabled: itemDialogOpen && !editingItem && debouncedSearch.length >= 2,
   });
 
-  const invalidate = () => qc.invalidateQueries({ queryKey: getListMenuItemsQueryKey() });
+  const invalidateItems = () => qc.invalidateQueries({ queryKey: getListMenuItemsQueryKey() });
+  const invalidateCats = () => qc.invalidateQueries({ queryKey: getListCategoriesQueryKey() });
 
-  const openCreate = () => {
-    setEditing(null);
-    setForm(emptyForm);
+  // ——— Items Logic ———
+  const openCreateItem = () => {
+    setEditingItem(null);
+    setItemForm(emptyItemForm);
     setFoodSearch("");
     setDebouncedSearch("");
-    setOpen(true);
+    setItemOpen(true);
   };
-  const openEdit = (item: FoodItemType) => {
-    setEditing(item);
-    setForm({
+  const openEditItem = (item: FoodItem) => {
+    setEditingItem(item);
+    setItemForm({
       name: item.name,
       description: item.description ?? "",
       price: String(item.price),
@@ -87,325 +113,320 @@ export default function AdminMenu() {
     });
     setFoodSearch("");
     setDebouncedSearch("");
-    setOpen(true);
+    setItemOpen(true);
+  };
+
+  const handleSaveItem = () => {
+    if (!itemForm.name.trim() || !itemForm.price || !itemForm.category_id) {
+      toast({ title: "Please fill required fields", variant: "destructive" });
+      return;
+    }
+    const basePayload: MenuItemInput = {
+      name: itemForm.name,
+      description: itemForm.description || undefined,
+      price: Number(itemForm.price),
+      food_type: itemForm.food_type,
+      is_available: itemForm.is_available,
+      category_id: Number(itemForm.category_id),
+    };
+    let payload = basePayload;
+    if (itemForm.imageMode === "upload" && itemForm.imageFile) payload = { ...basePayload, imageFile: itemForm.imageFile };
+    else if (itemForm.imageMode === "url") payload = { ...basePayload, image_url: itemForm.image_url };
+    else payload = { ...basePayload, image_url: "" };
+
+    if (editingItem) {
+      updateItem.mutate({ id: editingItem.id, data: payload }, {
+        onSuccess: () => { invalidateItems(); setItemOpen(false); toast({ title: "Item updated" }); },
+        onError: () => toast({ title: "Failed to update", variant: "destructive" })
+      });
+    } else {
+      createItem.mutate({ data: payload }, {
+        onSuccess: () => { invalidateItems(); setItemOpen(false); toast({ title: "Item created" }); },
+        onError: () => toast({ title: "Failed to create", variant: "destructive" })
+      });
+    }
+  };
+
+  const handleDeleteItem = (id: number) => {
+    if (!confirm("Delete this menu item?")) return;
+    deleteItem.mutate({ id }, {
+      onSuccess: () => { invalidateItems(); toast({ title: "Item deleted" }); },
+      onError: () => toast({ title: "Failed to delete", variant: "destructive" })
+    });
+  };
+
+  // ——— Categories Logic ———
+  const openCreateCat = () => {
+    setEditingCat(null);
+    setCatForm(emptyCatForm);
+    setCatOpen(true);
+  };
+  const openEditCat = (cat: Category) => {
+    setEditingCat(cat);
+    setCatForm({
+      name: cat.name,
+      image_url: cat.image ?? "",
+      imageFile: null,
+      imageMode: cat.image ? "url" : "none",
+    });
+    setCatOpen(true);
+  };
+
+  const handleSaveCat = () => {
+    if (!catForm.name.trim()) {
+      toast({ title: "Category name is required", variant: "destructive" });
+      return;
+    }
+    const basePayload: CategoryInput = { name: catForm.name };
+    let payload = basePayload;
+    if (catForm.imageMode === "upload" && catForm.imageFile) payload = { ...basePayload, imageFile: catForm.imageFile };
+    else if (catForm.imageMode === "url") payload = { ...basePayload, image_url: catForm.image_url };
+    else payload = { ...basePayload, image_url: "" };
+
+    if (editingCat) {
+      updateCat.mutate({ id: editingCat.id, data: payload }, {
+        onSuccess: () => { invalidateCats(); setCatOpen(false); toast({ title: "Category updated" }); },
+        onError: () => toast({ title: "Failed to update", variant: "destructive" })
+      });
+    } else {
+      createCat.mutate({ data: payload }, {
+        onSuccess: () => { invalidateCats(); setCatOpen(false); toast({ title: "Category created" }); },
+        onError: () => toast({ title: "Failed to create", variant: "destructive" })
+      });
+    }
+  };
+
+  const handleDeleteCat = (id: number) => {
+    if (!confirm("Delete this category? Items in this category will also be affected.")) return;
+    deleteCat.mutate({ id }, {
+      onSuccess: () => { invalidateCats(); invalidateItems(); toast({ title: "Category deleted" }); },
+      onError: () => toast({ title: "Failed to delete", variant: "destructive" })
+    });
   };
 
   const applyExternalFood = (item: ExternalFoodResult) => {
-    const matchedCategory = categories?.find(
-      (c) => c.name.toLowerCase() === item.suggested_category.toLowerCase(),
-    );
-    const fallbackCategory = categories?.[0];
-
-    setForm({
-      ...form,
+    const matched = categories?.find(c => c.name.toLowerCase() === item.suggested_category.toLowerCase());
+    setItemForm({
+      ...itemForm,
       name: item.name,
       description: item.description,
       image_url: item.image_url,
       imageMode: "url",
-      imageFile: null,
-      food_type: item.food_type,
-      category_id: String(matchedCategory?.id ?? fallbackCategory?.id ?? ""),
+      category_id: String(matched?.id ?? categories?.[0]?.id ?? ""),
     });
-    toast({
-      title: "Imported from food database",
-      description: "Review the price and details, then save.",
-    });
-  };
-
-  const buildPayload = (): MenuItemInput => {
-    const base: MenuItemInput = {
-      name: form.name,
-      description: form.description || undefined,
-      price: Number(form.price),
-      food_type: form.food_type,
-      is_available: form.is_available,
-      category_id: Number(form.category_id),
-    };
-
-    if (form.imageMode === "upload" && form.imageFile) {
-      return { ...base, imageFile: form.imageFile };
-    }
-    if (form.imageMode === "url" && form.image_url.trim()) {
-      return { ...base, image_url: form.image_url.trim() };
-    }
-    return { ...base, image_url: "" };
-  };
-
-  const handleSave = () => {
-    if (!form.name.trim() || !form.price || !form.category_id) {
-      toast({ title: "Please fill required fields", variant: "destructive" });
-      return;
-    }
-    if (form.imageMode === "upload" && !form.imageFile && !editing) {
-      toast({ title: "Please select an image file", variant: "destructive" });
-      return;
-    }
-
-    const payload = buildPayload();
-
-    if (editing) {
-      updateMutation.mutate(
-        { id: editing.id, data: payload },
-        { onSuccess: () => { invalidate(); setOpen(false); toast({ title: "Item updated" }); }, onError: () => toast({ title: "Failed to update", variant: "destructive" }) }
-      );
-    } else {
-      createMutation.mutate(
-        { data: payload },
-        { onSuccess: () => { invalidate(); setOpen(false); toast({ title: "Item created" }); }, onError: () => toast({ title: "Failed to create", variant: "destructive" }) }
-      );
-    }
-  };
-
-  const handleDelete = (id: number) => {
-    if (!confirm("Delete this menu item?")) return;
-    deleteMutation.mutate(
-      { id },
-      { onSuccess: () => { invalidate(); toast({ title: "Item deleted" }); }, onError: () => toast({ title: "Failed to delete", variant: "destructive" }) }
-    );
   };
 
   return (
     <div className="page-container py-5 sm:py-8">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
           <UtensilsCrossed className="w-6 h-6 sm:w-7 sm:h-7 text-primary shrink-0" />
-          <h1 className="page-title">Manage Menu</h1>
+          <h1 className="page-title">Menu Management</h1>
         </div>
-        <Button onClick={openCreate} className="w-full sm:w-auto">
-          <Plus className="mr-2 w-4 h-4" /> Add Item
-        </Button>
-      </div>
-
-      {isLoading ? (
-        <p className="text-muted-foreground">Loading...</p>
-      ) : (
-        <div className="bg-card border border-card-border rounded-2xl overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
-          <table className="w-full min-w-[32rem]">
-            <thead className="bg-muted/50 text-sm text-muted-foreground">
-              <tr>
-                <th className="text-left px-6 py-4 font-semibold">Item</th>
-                <th className="text-left px-6 py-4 font-semibold hidden md:table-cell">Category</th>
-                <th className="text-left px-6 py-4 font-semibold hidden sm:table-cell">Type</th>
-                <th className="text-left px-6 py-4 font-semibold">Price</th>
-                <th className="text-left px-6 py-4 font-semibold hidden sm:table-cell">Status</th>
-                <th className="text-right px-6 py-4 font-semibold">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {items?.map((item) => (
-                <tr key={item.id} className="hover:bg-muted/30 transition-colors">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-muted overflow-hidden shrink-0">
-                        {item.image ? (
-                          <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-lg">🍽️</div>
-                        )}
-                      </div>
-                      <span className="font-medium text-sm line-clamp-1">{item.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-muted-foreground hidden md:table-cell">{item.category?.name ?? "-"}</td>
-                  <td className="px-6 py-4 hidden sm:table-cell">
-                    <span className={`text-xs px-2 py-1 rounded-full font-semibold ${item.food_type === "veg" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-                      {item.food_type === "veg" ? "Veg" : "Non-Veg"}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 font-semibold text-primary">${item.price.toFixed(2)}</td>
-                  <td className="px-6 py-4 hidden sm:table-cell">
-                    <span className={`text-xs px-2 py-1 rounded-full font-semibold ${item.is_available ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
-                      {item.is_available ? "Available" : "Unavailable"}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <button onClick={() => openEdit(item)} className="p-1.5 text-muted-foreground hover:text-foreground transition-colors"><Edit2 className="w-4 h-4" /></button>
-                      <button onClick={() => handleDelete(item.id)} className="p-1.5 text-muted-foreground hover:text-destructive transition-colors"><Trash2 className="w-4 h-4" /></button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {items?.length === 0 && (
-            <div className="text-center py-12 text-muted-foreground">No menu items yet. Add one!</div>
+        <div className="flex gap-2">
+          {activeTab === "items" ? (
+            <Button onClick={openCreateItem} className="flex-1 sm:flex-none">
+              <Plus className="mr-2 w-4 h-4" /> Add Item
+            </Button>
+          ) : (
+            <Button onClick={openCreateCat} className="flex-1 sm:flex-none">
+              <Plus className="mr-2 w-4 h-4" /> Add Category
+            </Button>
           )}
         </div>
-      )}
+      </div>
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-lg w-[calc(100vw-2rem)] sm:w-full max-h-[90dvh] flex flex-col">
-          <DialogHeader>
-            <DialogTitle>{editing ? "Edit Menu Item" : "Add Menu Item"}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2 overflow-y-auto flex-1 pr-1">
-            {!editing && (
-              <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3">
-                <div className="flex items-center gap-2 text-sm font-semibold text-primary">
-                  <Sparkles className="w-4 h-4" />
-                  Search food database (free)
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="bg-muted/50 p-1">
+          <TabsTrigger value="items" className="flex items-center gap-2">
+            <UtensilsCrossed className="w-4 h-4" /> Items
+          </TabsTrigger>
+          <TabsTrigger value="categories" className="flex items-center gap-2">
+            <FolderTree className="w-4 h-4" /> Categories
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="items">
+          {itemsLoading ? (
+            <p className="text-muted-foreground">Loading items...</p>
+          ) : (
+            <div className="bg-card border border-card-border rounded-2xl overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+              <table className="w-full min-w-[40rem]">
+                <thead className="bg-muted/50 text-sm text-muted-foreground">
+                  <tr>
+                    <th className="text-left px-6 py-4 font-semibold">Item</th>
+                    <th className="text-left px-6 py-4 font-semibold">Category</th>
+                    <th className="text-left px-6 py-4 font-semibold">Type</th>
+                    <th className="text-left px-6 py-4 font-semibold">Price</th>
+                    <th className="text-left px-6 py-4 font-semibold">Status</th>
+                    <th className="text-right px-6 py-4 font-semibold">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {items?.map((item) => (
+                    <tr key={item.id} className="hover:bg-muted/30 transition-colors text-sm">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-muted overflow-hidden shrink-0">
+                            {item.image ? <img src={item.image} alt={item.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center">🍽️</div>}
+                          </div>
+                          <span className="font-medium line-clamp-1">{item.name}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-muted-foreground">{item.category?.name ?? "-"}</td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${item.food_type === "veg" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                          {item.food_type}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 font-bold text-primary">₹{item.price.toFixed(2)}</td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${item.is_available ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+                          {item.is_available ? "Active" : "Hidden"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button variant="ghost" size="icon" onClick={() => openEditItem(item)}><Edit2 className="w-4 h-4" /></Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleDeleteItem(item.id)} className="text-destructive hover:text-destructive"><Trash2 className="w-4 h-4" /></Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {items?.length === 0 && <div className="text-center py-12 text-muted-foreground">No menu items found.</div>}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="categories">
+          {catsLoading ? (
+            <p className="text-muted-foreground">Loading categories...</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {categories?.map((cat) => (
+                <div key={cat.id} className="bg-card border border-card-border rounded-xl p-4 flex items-center justify-between group">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-12 h-12 rounded-lg bg-muted overflow-hidden shrink-0 border">
+                      {cat.image ? <img src={cat.image} alt={cat.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-xl">📁</div>}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-sm truncate">{cat.name}</p>
+                      <p className="text-[10px] text-muted-foreground uppercase font-bold">ID: {cat.id}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditCat(cat)}><Edit2 className="w-3.5 h-3.5" /></Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDeleteCat(cat.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
+                  </div>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Search TheMealDB for dishes. Tap a result to auto-fill, or add manually below if not found.
-                </p>
+              ))}
+              {categories?.length === 0 && <div className="col-span-full text-center py-12 text-muted-foreground">No categories found.</div>}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
+
+      {/* Item Dialog */}
+      <Dialog open={itemDialogOpen} onOpenChange={setItemOpen}>
+        <DialogContent className="max-w-lg w-[calc(100vw-2rem)] max-h-[90dvh] flex flex-col">
+          <DialogHeader><DialogTitle>{editingItem ? "Edit Menu Item" : "Add Menu Item"}</DialogTitle></DialogHeader>
+          <div className="space-y-4 py-2 overflow-y-auto flex-1 pr-1">
+            {!editingItem && (
+              <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3">
+                <div className="flex items-center gap-2 text-sm font-semibold text-primary"><Sparkles className="w-4 h-4" /> Search food database</div>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    value={foodSearch}
-                    onChange={(e) => setFoodSearch(e.target.value)}
-                    placeholder="e.g. burger, pasta, tiramisu..."
-                    className="pl-9"
-                  />
+                  <Input value={foodSearch} onChange={(e) => setFoodSearch(e.target.value)} placeholder="e.g. Biryani, Chicken..." className="pl-9" />
                 </div>
-                {foodSearch.trim().length > 0 && foodSearch.trim().length < 2 && (
-                  <p className="text-xs text-muted-foreground">Type at least 2 characters to search.</p>
-                )}
-                {searchLoading && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Searching...
-                  </div>
-                )}
-                {!searchLoading && debouncedSearch.length >= 2 && externalResults?.length === 0 && (
-                  <p className="text-sm text-muted-foreground py-2">
-                    No matches for &quot;{debouncedSearch}&quot;. Add the item manually below.
-                  </p>
-                )}
                 {externalResults && externalResults.length > 0 && (
-                  <div className="space-y-2 max-h-48 overflow-y-auto">
-                    {externalResults.map((item) => (
-                      <button
-                        key={item.external_id}
-                        type="button"
-                        onClick={() => applyExternalFood(item)}
-                        className="w-full flex items-center gap-3 p-2 rounded-lg border border-border bg-card hover:border-primary hover:bg-primary/5 text-left transition-colors"
-                      >
-                        <img src={item.image_url} alt={item.name} className="w-12 h-12 rounded-md object-cover shrink-0 bg-muted" />
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm line-clamp-1">{item.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {item.meal_category} · suggests {item.suggested_category}
-                          </p>
-                        </div>
-                        <span className="text-xs font-medium text-primary shrink-0">Use</span>
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                    {externalResults.map(res => (
+                      <button key={res.external_id} type="button" onClick={() => applyExternalFood(res)} className="w-full flex items-center gap-3 p-2 rounded-lg border bg-card hover:border-primary text-left transition-colors">
+                        <img src={res.image_url} alt="" className="w-10 h-10 rounded object-cover" />
+                        <span className="flex-1 text-xs font-medium line-clamp-1">{res.name}</span>
+                        <span className="text-[10px] font-bold text-primary">USE</span>
                       </button>
                     ))}
                   </div>
                 )}
                 <Separator />
-                <p className="text-xs font-medium text-muted-foreground">Or enter details manually</p>
               </div>
             )}
             <div className="space-y-2">
               <Label>Name</Label>
-              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Dish name" />
-            </div>
-            <div className="space-y-2">
-              <Label>Description</Label>
-              <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Brief description" rows={2} />
+              <Input value={itemForm.name} onChange={e => setItemForm({...itemForm, name: e.target.value})} placeholder="Item name" />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Price ($)</Label>
-                <Input type="number" step="0.01" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} placeholder="0.00" />
+                <Label>Price (₹)</Label>
+                <Input type="number" value={itemForm.price} onChange={e => setItemForm({...itemForm, price: e.target.value})} />
               </div>
               <div className="space-y-2">
                 <Label>Category</Label>
-                <Select value={form.category_id} onValueChange={(v) => setForm({ ...form, category_id: v })}>
+                <Select value={itemForm.category_id} onValueChange={v => setItemForm({...itemForm, category_id: v})}>
                   <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
-                  <SelectContent>
-                    {categories?.map((c) => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}
-                  </SelectContent>
+                  <SelectContent>{categories?.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Type</Label>
-                <Select value={form.food_type} onValueChange={(v) => setForm({ ...form, food_type: v as "veg" | "nonveg" })}>
+                <Select value={itemForm.food_type} onValueChange={v => setItemForm({...itemForm, food_type: v as "veg" | "nonveg"})}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="veg">Veg</SelectItem>
-                    <SelectItem value="nonveg">Non-Veg</SelectItem>
-                  </SelectContent>
+                  <SelectContent><SelectItem value="veg">Veg</SelectItem><SelectItem value="nonveg">Non-Veg</SelectItem></SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Status</Label>
-                <Select value={form.is_available ? "available" : "unavailable"} onValueChange={(v) => setForm({ ...form, is_available: v === "available" })}>
+                <Label>Availability</Label>
+                <Select value={itemForm.is_available ? "yes" : "no"} onValueChange={v => setItemForm({...itemForm, is_available: v === "yes"})}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="available">Available</SelectItem>
-                    <SelectItem value="unavailable">Unavailable</SelectItem>
-                  </SelectContent>
+                  <SelectContent><SelectItem value="yes">Available</SelectItem><SelectItem value="no">Unavailable</SelectItem></SelectContent>
                 </Select>
               </div>
             </div>
             <div className="space-y-3">
               <Label>Image</Label>
               <div className="grid grid-cols-3 gap-2">
-                {([
-                  { mode: "none" as const, label: "No image", icon: ImageOff },
-                  { mode: "url" as const, label: "URL", icon: Link2 },
-                  { mode: "upload" as const, label: "Upload", icon: Upload },
-                ]).map(({ mode, label, icon: Icon }) => (
-                  <button
-                    key={mode}
-                    type="button"
-                    onClick={() => setForm({ ...form, imageMode: mode, imageFile: null })}
-                    className={`flex flex-col items-center gap-1.5 rounded-lg border p-2.5 text-xs font-medium transition-colors ${
-                      form.imageMode === mode
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "border-border hover:border-primary/50"
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                    {label}
+                {[{m:"none", l:"None", i:ImageOff}, {m:"url", l:"URL", i:Link2}, {m:"upload", l:"File", i:Upload}].map(x => (
+                  <button key={x.m} type="button" onClick={() => setItemForm({...itemForm, imageMode: x.m as ImageMode, imageFile: null})} className={`flex flex-col items-center gap-1 p-2 rounded-lg border text-[10px] font-bold uppercase transition-colors ${itemForm.imageMode === x.m ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/50"}`}>
+                    <x.i className="w-4 h-4" />{x.l}
                   </button>
                 ))}
               </div>
-
-              {form.imageMode === "url" && (
-                <Input
-                  value={form.image_url}
-                  onChange={(e) => setForm({ ...form, image_url: e.target.value })}
-                  placeholder="https://example.com/photo.jpg"
-                />
-              )}
-
-              {form.imageMode === "upload" && (
-                <div className="space-y-2">
-                  <Input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp,image/gif"
-                    onChange={(e) => setForm({ ...form, imageFile: e.target.files?.[0] ?? null })}
-                  />
-                  <p className="text-xs text-muted-foreground">JPG, PNG, WebP or GIF (max 5MB recommended)</p>
-                </div>
-              )}
-
-              {(form.image_url || form.imageFile) && (
-                <div className="w-full h-32 rounded-lg bg-muted overflow-hidden border border-border">
-                  {form.imageFile ? (
-                    <img
-                      src={URL.createObjectURL(form.imageFile)}
-                      alt="Preview"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : form.image_url ? (
-                    <img src={form.image_url} alt="Preview" className="w-full h-full object-cover" />
-                  ) : null}
-                </div>
-              )}
+              {itemForm.imageMode === "url" && <Input value={itemForm.image_url} onChange={e => setItemForm({...itemForm, image_url: e.target.value})} placeholder="Image URL" />}
+              {itemForm.imageMode === "upload" && <Input type="file" onChange={e => setItemForm({...itemForm, imageFile: e.target.files?.[0] ?? null})} />}
             </div>
           </div>
-          <DialogFooter className="shrink-0">
-            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button onClick={handleSave} disabled={createMutation.isPending || updateMutation.isPending}>
-              {editing ? "Save Changes" : "Add Item"}
-            </Button>
-          </DialogFooter>
+          <DialogFooter className="shrink-0"><Button variant="outline" onClick={() => setItemOpen(false)}>Cancel</Button><Button onClick={handleSaveItem}>Save</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Category Dialog */}
+      <Dialog open={catDialogOpen} onOpenChange={setCatOpen}>
+        <DialogContent className="max-w-md w-[calc(100vw-2rem)]">
+          <DialogHeader><DialogTitle>{editingCat ? "Edit Category" : "Add Category"}</DialogTitle></DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Category Name</Label>
+              <Input value={catForm.name} onChange={e => setCatForm({...catForm, name: e.target.value})} placeholder="e.g. Starters, Main Course" />
+            </div>
+            <div className="space-y-3">
+              <Label>Image</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {[{m:"none", l:"None", i:ImageOff}, {m:"url", l:"URL", i:Link2}, {m:"upload", l:"File", i:Upload}].map(x => (
+                  <button key={x.m} type="button" onClick={() => setCatForm({...catForm, imageMode: x.m as ImageMode, imageFile: null})} className={`flex flex-col items-center gap-1 p-2 rounded-lg border text-[10px] font-bold uppercase transition-colors ${catForm.imageMode === x.m ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/50"}`}>
+                    <x.i className="w-4 h-4" />{x.l}
+                  </button>
+                ))}
+              </div>
+              {catForm.imageMode === "url" && <Input value={catForm.image_url} onChange={e => setCatForm({...catForm, image_url: e.target.value})} placeholder="Image URL" />}
+              {catForm.imageMode === "upload" && <Input type="file" onChange={e => setCatForm({...catForm, imageFile: e.target.files?.[0] ?? null})} />}
+            </div>
+          </div>
+          <DialogFooter><Button variant="outline" onClick={() => setCatOpen(false)}>Cancel</Button><Button onClick={handleSaveCat}>Save</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

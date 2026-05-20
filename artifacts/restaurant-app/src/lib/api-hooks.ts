@@ -360,6 +360,63 @@ export function useGetDashboardStats(
 
 // ——— Mutations ———
 
+export type CategoryInput = {
+  name: string;
+  image_url?: string;
+  imageFile?: File | null;
+};
+
+function buildCategoryPayload(data: CategoryInput): FormData | Record<string, unknown> {
+  if (data.imageFile) {
+    const form = new FormData();
+    form.append("name", data.name);
+    form.append("image", data.imageFile);
+    return form;
+  }
+  const payload: Record<string, unknown> = { name: data.name };
+  if (data.image_url !== undefined) payload.image_url = data.image_url;
+  return payload;
+}
+
+export function useCreateCategory(
+  options?: UseMutationOptions<Category, Error, { data: CategoryInput }>,
+) {
+  return useMutation({
+    mutationFn: async ({ data }) => {
+      const payload = buildCategoryPayload(data);
+      const config = payload instanceof FormData ? { headers: { "Content-Type": "multipart/form-data" } } : undefined;
+      const { data: res } = await api.post("categories/", payload, config);
+      return normalizeCategory(res);
+    },
+    ...options,
+  });
+}
+
+export function useUpdateCategory(
+  options?: UseMutationOptions<Category, Error, { id: number; data: CategoryInput }>,
+) {
+  return useMutation({
+    mutationFn: async ({ id, data }) => {
+      const payload = buildCategoryPayload(data);
+      const config = payload instanceof FormData ? { headers: { "Content-Type": "multipart/form-data" } } : undefined;
+      const { data: res } = await api.patch(`categories/${id}/`, payload, config);
+      return normalizeCategory(res);
+    },
+    ...options,
+  });
+}
+
+export function useDeleteCategory(
+  options?: UseMutationOptions<void, Error, { id: number }>,
+) {
+  return useMutation({
+    mutationFn: async ({ id }) => {
+      await api.delete(`categories/${id}/`);
+    },
+    ...options,
+  });
+}
+
 export type MenuItemInput = {
   name: string;
   description?: string;
