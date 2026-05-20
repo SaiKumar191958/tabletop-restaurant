@@ -64,7 +64,7 @@ export default function OrdersPage() {
                   <PaymentBadge order={order} />
                 </div>
                 <div className="text-right">
-                  <p className="text-xl font-bold text-primary">${order.total_price.toFixed(2)}</p>
+                  <p className="text-xl font-bold text-primary">₹{order.total_price.toFixed(2)}</p>
                   <p className="text-xs text-muted-foreground">{order.items?.length ?? 0} items</p>
                 </div>
               </div>
@@ -83,7 +83,7 @@ export default function OrdersPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium line-clamp-1">{item.food_item?.name}</p>
-                        <p className="text-xs text-muted-foreground">x{item.quantity} · ${item.price.toFixed(2)} each</p>
+                        <p className="text-xs text-muted-foreground">x{item.quantity} · ₹{item.price.toFixed(2)} each</p>
                       </div>
                     </div>
                   ))}

@@ -26,6 +26,13 @@ class OrderStatusUpdateView(APIView):
             status_val = request.data.get('status')
             if status_val in dict(Order.STATUS):
                 order.status = status_val
+                
+                # Auto-mark as paid if delivered
+                if status_val == 'delivered':
+                    order.payment_status = 'paid'
+                    from django.utils import timezone
+                    order.paid_at = timezone.now()
+                
                 order.save()
                 return Response(OrderSerializer(order).data)
             return Response({"error": "Invalid status"}, status=status.HTTP_400_BAD_REQUEST)
