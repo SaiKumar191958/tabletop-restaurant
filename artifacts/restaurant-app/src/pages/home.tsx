@@ -1,57 +1,24 @@
 import { Link } from "react-router-dom";
-import { useState, useEffect } from "react";
-import api from "@/lib/api";
+import {
+  useListMenuItems,
+  useListCategories,
+} from "@/lib/api-hooks";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/lib/cart-context";
 import { useRestaurant } from "@/lib/restaurant-context";
 import { toast } from "react-hot-toast";
 import { Star, Leaf, ArrowRight, ShoppingBag, Truck, Info } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-
-interface Category {
-  id: number;
-  name: string;
-  image?: string;
-}
-
-interface FoodItem {
-  id: number;
-  name: string;
-  description: string;
-  price: number;
-  image?: string;
-  food_type: 'veg' | 'nonveg';
-  rating: number;
-}
+import type { FoodItem } from "@/lib/api-hooks";
 
 export default function Home() {
-  const [featured, setFeatured] = useState<FoodItem[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [featLoading, setFeatLoading] = useState(true);
-  const [catLoading, setCatLoading] = useState(true);
+  const { data: categories, isLoading: catLoading } = useListCategories();
+  const { data: items, isLoading: featLoading } = useListMenuItems();
+  
+  const featured = items?.slice(0, 8) || [];
+  
   const { addItem } = useCart();
   const { config } = useRestaurant();
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [menuRes, catRes] = await Promise.all([
-          api.get('menu/'),
-          api.get('categories/')
-        ]);
-        const menuData = Array.isArray(menuRes.data) ? menuRes.data : menuRes.data.results ?? [];
-        const catData = Array.isArray(catRes.data) ? catRes.data : catRes.data.results ?? [];
-        setFeatured(menuData.slice(0, 8));
-        setCategories(catData);
-      } catch (error) {
-        console.error("Failed to fetch home data", error);
-      } finally {
-        setFeatLoading(false);
-        setCatLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
 
   const handleAddToCart = (item: FoodItem) => {
     addItem({ food_item_id: item.id, name: item.name, price: item.price, image: item.image });
@@ -133,11 +100,17 @@ export default function Home() {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 sm:gap-4">
             {categories?.map((cat) => (
               <Link key={cat.id} to={`/menu?category_id=${cat.id}`}>
-                <div className="group bg-card border border-card-border rounded-2xl p-4 text-center hover:border-primary hover:shadow-lg transition-all cursor-pointer">
-                  <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:bg-primary/20 transition-colors text-2xl">
-                    {cat.name.includes("Main") ? "🍛" : cat.name.includes("Starters") ? "🍗" : cat.name.includes("Combo") ? "🍱" : "🍽️"}
+                <div className="group bg-card border border-card-border rounded-2xl p-4 text-center hover:border-primary hover:shadow-lg transition-all cursor-pointer h-full flex flex-col items-center justify-center">
+                  <div className="w-16 h-16 rounded-xl overflow-hidden mb-3 border group-hover:border-primary transition-colors flex items-center justify-center bg-muted">
+                    {cat.image ? (
+                      <img src={cat.image} alt={cat.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-2xl">
+                        {cat.name.includes("Main") ? "🍛" : cat.name.includes("Starters") ? "🍗" : cat.name.includes("Combo") ? "🍱" : "🍽️"}
+                      </span>
+                    )}
                   </div>
-                  <p className="text-sm font-semibold text-foreground truncate">{cat.name}</p>
+                  <p className="text-sm font-semibold text-foreground truncate w-full">{cat.name}</p>
                 </div>
               </Link>
             ))}
