@@ -50,7 +50,9 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'cloudinary_storage',
     'django.contrib.staticfiles',
+    'cloudinary',
     # Third-party apps
     'rest_framework',
     'rest_framework_simplejwt',
@@ -241,9 +243,25 @@ CORS_ALLOW_HEADERS = [
 
 CSRF_TRUSTED_ORIGINS = _cors_origins.copy()
 
-# Media files (ephemeral on free Render — prefer image_url for menu items)
+# Media files (Cloudinary for persistence on Render)
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': _env('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': _env('CLOUDINARY_API_KEY'),
+    'API_SECRET': _env('CLOUDINARY_API_SECRET'),
+}
+
 MEDIA_URL = '/media/'
+# MEDIA_ROOT is not strictly needed for Cloudinary but kept for local fallback
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+STORAGES = {
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 
 # Password validation
