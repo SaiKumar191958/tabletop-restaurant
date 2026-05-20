@@ -263,6 +263,9 @@ STORAGES = {
     },
 }
 
+# Compatibility for libraries that still check old settings
+STATICFILES_STORAGE = STORAGES["staticfiles"]["BACKEND"]
+
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
