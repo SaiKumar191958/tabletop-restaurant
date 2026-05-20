@@ -4,6 +4,7 @@ import { Toaster } from "react-hot-toast";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/lib/auth-context";
 import { CartProvider } from "@/lib/cart-context";
+import { RestaurantProvider } from "@/lib/restaurant-context";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { Layout } from "@/components/layout";
 
@@ -28,71 +29,73 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <CartProvider>
-          <TooltipProvider>
-            <BrowserRouter>
-              <Routes>
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />
-                <Route element={<Layout />}>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/menu" element={<MenuPage />} />
-                  <Route path="/cart" element={<CartPage />} />
-                  <Route
-                    path="/checkout"
-                    element={
-                      <ProtectedRoute allowedRoles={["user", "admin", "superadmin"]}>
-                        <CheckoutPage />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/orders"
-                    element={
-                      <ProtectedRoute allowedRoles={["user", "admin", "superadmin"]}>
-                        <OrdersPage />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/admin/dashboard"
-                    element={
-                      <ProtectedRoute allowedRoles={["admin", "superadmin"]}>
-                        <AdminDashboard />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/admin/menu"
-                    element={
-                      <ProtectedRoute allowedRoles={["admin", "superadmin"]}>
-                        <AdminMenu />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/admin/orders"
-                    element={
-                      <ProtectedRoute allowedRoles={["admin", "superadmin"]}>
-                        <AdminOrders />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/superadmin/users"
-                    element={
-                      <ProtectedRoute allowedRoles={["superadmin"]}>
-                        <SuperAdminUsers />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route path="*" element={<NotFound />} />
-                </Route>
-              </Routes>
-            </BrowserRouter>
-            <Toaster position="top-center" />
-          </TooltipProvider>
-        </CartProvider>
+        <RestaurantProvider>
+          <CartProvider>
+            <TooltipProvider>
+              <BrowserRouter>
+                <Routes>
+                  <Route element={<Layout />}>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/register" element={<RegisterPage />} />
+                    <Route path="/menu" element={<MenuPage />} />
+                    <Route path="/cart" element={<CartPage />} />
+                    <Route
+                      path="/checkout"
+                      element={
+                        <ProtectedRoute allowedRoles={["user", "admin", "superadmin"]}>
+                          <CheckoutPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/orders"
+                      element={
+                        <ProtectedRoute allowedRoles={["user", "admin", "superadmin"]}>
+                          <OrdersPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/admin/dashboard"
+                      element={
+                        <ProtectedRoute allowedRoles={["admin", "superadmin"]}>
+                          <AdminDashboard />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/admin/menu"
+                      element={
+                        <ProtectedRoute allowedRoles={["admin", "superadmin"]}>
+                          <AdminMenu />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/admin/orders"
+                      element={
+                        <ProtectedRoute allowedRoles={["admin", "superadmin"]}>
+                          <AdminOrders />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/superadmin/users"
+                      element={
+                        <ProtectedRoute allowedRoles={["superadmin"]}>
+                          <SuperAdminUsers />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route path="*" element={<NotFound />} />
+                  </Route>
+                </Routes>
+              </BrowserRouter>
+              <Toaster position="top-center" />
+            </TooltipProvider>
+          </CartProvider>
+        </RestaurantProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

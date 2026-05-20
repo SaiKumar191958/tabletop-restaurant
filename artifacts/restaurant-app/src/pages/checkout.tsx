@@ -28,6 +28,7 @@ export default function CheckoutPage() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cod");
+  const [showValidationErrors, setShowValidationErrors] = useState(false);
 
   const { items, total, clearCart } = useCart();
   const { config } = useRestaurant();
@@ -48,9 +49,10 @@ export default function CheckoutPage() {
       return;
     }
     if (!address.trim() || !phone.trim()) {
+      setShowValidationErrors(true);
       toast({ 
-        title: "Mandatory fields missing", 
-        description: "Please enter both delivery address and mobile number.", 
+        title: "Validation Error", 
+        description: "Please enter the mandatory fields", 
         variant: "destructive" 
       });
       return;
@@ -110,7 +112,9 @@ export default function CheckoutPage() {
                 <Input id="name" placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="phone">Mobile Number *</Label>
+                <Label htmlFor="phone" className={showValidationErrors && !phone.trim() ? "text-destructive" : ""}>
+                  Mobile Number *
+                </Label>
                 <Input 
                   id="phone" 
                   type="tel"
@@ -118,10 +122,13 @@ export default function CheckoutPage() {
                   value={phone} 
                   onChange={(e) => setPhone(e.target.value)} 
                   required
+                  className={showValidationErrors && !phone.trim() ? "border-destructive focus-visible:ring-destructive" : ""}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="address">Delivery Address *</Label>
+                <Label htmlFor="address" className={showValidationErrors && !address.trim() ? "text-destructive" : ""}>
+                  Delivery Address *
+                </Label>
                 <Textarea
                   id="address"
                   placeholder="Enter your full delivery address..."
@@ -129,6 +136,7 @@ export default function CheckoutPage() {
                   onChange={(e) => setAddress(e.target.value)}
                   required
                   rows={3}
+                  className={showValidationErrors && !address.trim() ? "border-destructive focus-visible:ring-destructive" : ""}
                 />
               </div>
             </div>

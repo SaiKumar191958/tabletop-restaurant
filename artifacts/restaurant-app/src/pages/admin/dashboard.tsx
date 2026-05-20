@@ -1,6 +1,6 @@
 import { useGetDashboardStats } from "@/lib/api-hooks";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ShoppingBag, DollarSign, Users, UtensilsCrossed, TrendingUp } from "lucide-react";
+import { ShoppingBag, Banknote, Users, UtensilsCrossed, TrendingUp } from "lucide-react";
 
 const STATUS_COLORS: Record<string, string> = {
   pending:   "bg-yellow-500",
@@ -30,7 +30,7 @@ export default function AdminDashboard() {
 
   const statCards = [
     { label: "Total Orders", value: stats?.total_orders ?? 0, icon: ShoppingBag, color: "text-blue-600", bg: "bg-blue-50" },
-    { label: "Total Revenue", value: `$${(stats?.total_revenue ?? 0).toFixed(2)}`, icon: DollarSign, color: "text-green-600", bg: "bg-green-50" },
+    { label: "Total Revenue", value: `₹{(stats?.total_revenue ?? 0).toFixed(2)}`, icon: Banknote, color: "text-green-600", bg: "bg-green-50" },
     { label: "Total Users", value: stats?.total_users ?? 0, icon: Users, color: "text-purple-600", bg: "bg-purple-50" },
     { label: "Menu Items", value: stats?.total_menu_items ?? 0, icon: UtensilsCrossed, color: "text-orange-600", bg: "bg-orange-50" },
   ];
@@ -96,7 +96,7 @@ export default function AdminDashboard() {
                     <p className="text-xs text-muted-foreground capitalize">{order.status}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-bold text-primary">${order.total_price.toFixed(2)}</p>
+                    <p className="text-sm font-bold text-primary">₹{order.total_price.toFixed(2)}</p>
                     <p className="text-xs text-muted-foreground">
                       {new Date(order.created_at).toLocaleDateString()}
                     </p>

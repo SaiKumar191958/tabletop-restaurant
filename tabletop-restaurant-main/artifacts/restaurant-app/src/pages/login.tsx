@@ -16,6 +16,7 @@ export default function LoginPage() {
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [demoOtp, setDemoOtp] = useState<string | null>(null);
+  const [showValidationErrors, setShowValidationErrors] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -27,6 +28,11 @@ export default function LoginPage() {
 
   const handleRequestOtp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!email.trim()) {
+      setShowValidationErrors(true);
+      toast.error("Please enter the mandatory fields");
+      return;
+    }
     setLoading(true);
     setDemoOtp(null);
     try {
@@ -70,13 +76,13 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex bg-background">
+    <div className="flex-1 flex bg-background">
       <div className="hidden lg:flex lg:w-1/2 bg-secondary items-center justify-center p-12 relative overflow-hidden">
         <div className="relative text-center text-secondary-foreground">
           <div className="bg-primary text-primary-foreground p-4 rounded-2xl inline-block mb-6">
             <ShoppingBag className="w-12 h-12" />
           </div>
-          <h1 className="text-4xl font-bold mb-4">TableTop</h1>
+          <h1 className="text-4xl font-bold mb-4">Sri Durga Military Hotel</h1>
           <p className="text-secondary-foreground/70 text-lg max-w-sm">
             Sign in securely with a one-time code sent to your email.
           </p>
@@ -85,13 +91,6 @@ export default function LoginPage() {
 
       <div className="flex-1 flex items-center justify-center p-4 sm:p-8">
         <div className="w-full max-w-md px-1">
-          <div className="flex items-center gap-2 mb-8 lg:hidden">
-            <div className="bg-primary text-primary-foreground p-1.5 rounded-md">
-              <ShoppingBag className="w-5 h-5" />
-            </div>
-            <span className="font-bold text-xl">TableTop</span>
-          </div>
-
           <h2 className="text-3xl font-bold text-foreground mb-2">Welcome back</h2>
           <p className="text-muted-foreground mb-8">
             {step === "email" ? "Enter your email to receive a sign-in code" : `Code sent to ${email}`}
@@ -100,16 +99,18 @@ export default function LoginPage() {
           {step === "email" ? (
             <form onSubmit={handleRequestOtp} className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className={showValidationErrors && !email.trim() ? "text-destructive" : ""}>
+                  Email *
+                </Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Mail className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${showValidationErrors && !email.trim() ? "text-destructive" : "text-muted-foreground"}`} />
                   <Input
                     id="email"
                     type="email"
                     placeholder="you@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="pl-9"
+                    className={`pl-9 ${showValidationErrors && !email.trim() ? "border-destructive focus-visible:ring-destructive" : ""}`}
                     required
                   />
                 </div>
@@ -164,7 +165,7 @@ export default function LoginPage() {
 
           <div className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">
-              New to TableTop?{" "}
+              New to Sri Durga Military Hotel?{" "}
               <Link to="/register" className="text-primary font-medium hover:underline">
                 Create an account
               </Link>

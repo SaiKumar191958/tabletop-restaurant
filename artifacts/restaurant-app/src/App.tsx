@@ -34,10 +34,10 @@ function App() {
             <TooltipProvider>
               <BrowserRouter>
                 <Routes>
-                  <Route path="/login" element={<LoginPage />} />
-                  <Route path="/register" element={<RegisterPage />} />
                   <Route element={<Layout />}>
                     <Route path="/" element={<Home />} />
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/register" element={<RegisterPage />} />
                     <Route path="/menu" element={<MenuPage />} />
                     <Route path="/cart" element={<CartPage />} />
                     <Route

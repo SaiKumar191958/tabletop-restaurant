@@ -16,6 +16,7 @@ export default function RegisterPage() {
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [demoOtp, setDemoOtp] = useState<string | null>(null);
+  const [showValidationErrors, setShowValidationErrors] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -24,6 +25,11 @@ export default function RegisterPage() {
 
   const handleRequestOtp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!form.username.trim() || !form.email.trim()) {
+      setShowValidationErrors(true);
+      toast.error("Please enter the mandatory fields");
+      return;
+    }
     setLoading(true);
     setDemoOtp(null);
     try {
@@ -69,13 +75,13 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex bg-background">
+    <div className="flex-1 flex bg-background">
       <div className="hidden lg:flex lg:w-1/2 bg-primary items-center justify-center p-12 relative overflow-hidden">
         <div className="relative text-center text-primary-foreground">
           <div className="bg-primary-foreground/20 p-4 rounded-2xl inline-block mb-6">
             <ShoppingBag className="w-12 h-12" />
           </div>
-          <h1 className="text-4xl font-bold mb-4">Join TableTop</h1>
+          <h1 className="text-4xl font-bold mb-4">Join Sri Durga Military Hotel</h1>
           <p className="text-primary-foreground/80 text-lg max-w-sm">
             Verify your email with a one-time code — no password needed.
           </p>
@@ -84,13 +90,6 @@ export default function RegisterPage() {
 
       <div className="flex-1 flex items-center justify-center p-4 sm:p-8">
         <div className="w-full max-w-md">
-          <div className="flex items-center gap-2 mb-8 lg:hidden">
-            <div className="bg-primary text-primary-foreground p-1.5 rounded-md">
-              <ShoppingBag className="w-5 h-5" />
-            </div>
-            <span className="font-bold text-xl">TableTop</span>
-          </div>
-
           <h2 className="text-3xl font-bold text-foreground mb-2">Create account</h2>
           <p className="text-muted-foreground mb-8">
             {step === "details" ? "We'll email you a code to verify your address" : `Code sent to ${form.email}`}
@@ -99,7 +98,9 @@ export default function RegisterPage() {
           {step === "details" ? (
             <form onSubmit={handleRequestOtp} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
+                <Label htmlFor="username" className={showValidationErrors && !form.username.trim() ? "text-destructive" : ""}>
+                  Username *
+                </Label>
                 <Input
                   id="username"
                   name="username"
@@ -107,10 +108,13 @@ export default function RegisterPage() {
                   value={form.username}
                   onChange={handleChange}
                   required
+                  className={showValidationErrors && !form.username.trim() ? "border-destructive focus-visible:ring-destructive" : ""}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className={showValidationErrors && !form.email.trim() ? "text-destructive" : ""}>
+                  Email *
+                </Label>
                 <Input
                   id="email"
                   name="email"
@@ -119,6 +123,7 @@ export default function RegisterPage() {
                   value={form.email}
                   onChange={handleChange}
                   required
+                  className={showValidationErrors && !form.email.trim() ? "border-destructive focus-visible:ring-destructive" : ""}
                 />
               </div>
               <div className="space-y-2">

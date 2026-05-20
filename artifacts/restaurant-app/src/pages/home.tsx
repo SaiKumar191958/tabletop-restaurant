@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   useListMenuItems,
   useListCategories,
@@ -17,10 +17,16 @@ export default function Home() {
   
   const featured = items?.slice(0, 8) || [];
   
-  const { addItem } = useCart();
+  const { addItem, items: cartItems } = useCart();
   const { config } = useRestaurant();
+  const navigate = useNavigate();
 
   const handleAddToCart = (item: FoodItem) => {
+    const isInCart = cartItems.some(i => i.food_item_id === item.id);
+    if (isInCart) {
+      navigate("/cart");
+      return;
+    }
     addItem({ food_item_id: item.id, name: item.name, price: item.price, image: item.image });
     toast.success(`${item.name} added to cart`);
   };
@@ -167,8 +173,12 @@ export default function Home() {
                     <p className="text-muted-foreground text-sm line-clamp-2 mb-3">{item.description}</p>
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-base sm:text-lg font-bold text-primary">₹{Number(item.price).toFixed(2)}</span>
-                      <Button size="sm" onClick={() => handleAddToCart(item)} className="h-8 shrink-0 text-xs sm:text-sm">
-                        Add to cart
+                      <Button 
+                        size="sm" 
+                        onClick={() => handleAddToCart(item)} 
+                        className={`h-8 shrink-0 text-xs sm:text-sm ${cartItems.some(i => i.food_item_id === item.id) ? "bg-green-600 hover:bg-green-700" : ""}`}
+                      >
+                        {cartItems.some(i => i.food_item_id === item.id) ? "Proceed" : "Add to cart"}
                       </Button>
                     </div>
                   </div>
