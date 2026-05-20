@@ -195,6 +195,15 @@ function normalizeUser(raw: Record<string, unknown>): User {
   };
 }
 
+function normalizeRestaurantConfig(raw: Record<string, unknown>): RestaurantConfig {
+  return {
+    name: String(raw.name),
+    packing_charge: Number(raw.packing_charge ?? 0),
+    delivery_charge_info: String(raw.delivery_charge_info ?? ""),
+    bulk_order_info: String(raw.bulk_order_info ?? ""),
+  };
+}
+
 // ——— Query keys ———
 
 export const getListCategoriesQueryKey = () => ["categories"] as const;
@@ -544,16 +553,6 @@ export function useUpdateOrderStatus(
 
 export function useUpdateUserRole(
   options?: UseMutationOptions<User, Error, { id: number; data: { role: string } }>,
-) {
-  return useMutation({
-    mutationFn: async ({ id, data }) => {
-      const { data: res } = await api.patch(`admin/users/${id}/role/`, data);
-      return normalizeUser(res);
-    },
-    ...options,
-  });
-}
-ptions<User, Error, { id: number; data: { role: string } }>,
 ) {
   return useMutation({
     mutationFn: async ({ id, data }) => {
