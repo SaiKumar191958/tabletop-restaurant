@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   useCreateOrder,
-  usePaymentConfig,
   getListMyOrdersQueryKey,
   type PaymentMethod,
 } from "@/lib/api-hooks";
@@ -17,29 +16,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import {
   MapPin,
-  CreditCard,
   Smartphone,
   Banknote,
-  ShieldCheck,
   Loader2,
-  AlertCircle,
+  Info,
+  CheckCircle2
 } from "lucide-react";
-
-const PAYMENT_ICONS: Record<PaymentMethod, typeof CreditCard> = {
-  card: CreditCard,
-  upi: Smartphone,
-  cod: Banknote,
-};
 
 export default function CheckoutPage() {
   const [address, setAddress] = useState("");
   const [name, setName] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("upi");
-  const [upiId, setUpiId] = useState("");
-  const [cardNumber, setCardNumber] = useState("");
-  const [cardName, setCardName] = useState("");
-  const [cardExpiry, setCardExpiry] = useState("");
-  const [cardCvv, setCardCvv] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cod");
 
   const { items, total, clearCart } = useCart();
   const { config } = useRestaurant();
@@ -47,7 +34,6 @@ export default function CheckoutPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const createOrderMutation = useCreateOrder();
-  const { data: paymentConfig } = usePaymentConfig();
 
   const packingCharge = config?.packing_charge || 20;
   const gstPercent = config?.gst_percentage || 5;
@@ -64,21 +50,6 @@ export default function CheckoutPage() {
       toast({ title: "Address required", variant: "destructive" });
       return;
     }
-    if (paymentMethod === "upi" && !upiId.trim()) {
-      toast({ title: "Enter UPI ID", description: "e.g. name@upi", variant: "destructive" });
-      return;
-    }
-    if (paymentMethod === "card") {
-      const digits = cardNumber.replace(/\D/g, "");
-      if (digits.length < 12) {
-        toast({ title: "Invalid card", description: "Enter a valid card number.", variant: "destructive" });
-        return;
-      }
-      if (!cardName.trim() || !cardExpiry.trim() || cardCvv.length < 3) {
-        toast({ title: "Complete card details", variant: "destructive" });
-        return;
-      }
-    }
 
     createOrderMutation.mutate(
       {
@@ -86,27 +57,15 @@ export default function CheckoutPage() {
           address: `${name ? name + ", " : ""}${address}`,
           items: items.map((i) => ({ food_item_id: i.food_item_id, quantity: i.quantity })),
           payment_method: paymentMethod,
-          card_number: paymentMethod === "card" ? cardNumber.replace(/\D/g, "") : undefined,
         },
       },
       {
-        onSuccess: (order) => {
+        onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getListMyOrdersQueryKey() });
-          if (order.payment_status === "failed") {
-            toast({
-              title: "Payment failed",
-              description: "Demo: use a different card or try UPI / COD.",
-              variant: "destructive",
-            });
-            return;
-          }
           clearCart();
-          const paid = order.payment_status === "paid";
           toast({
-            title: paid ? "Payment successful!" : "Order placed!",
-            description: paid
-              ? `Paid via ${order.payment_method?.toUpperCase()} · Ref ${order.payment_reference}`
-              : "Pay cash on delivery when your order arrives.",
+            title: "Order Placed Successfully!",
+            description: "The restaurant has been notified. You can pay when you receive your order.",
           });
           navigate("/orders");
         },
@@ -117,22 +76,17 @@ export default function CheckoutPage() {
     );
   };
 
-  const submitLabel =
-    paymentMethod === "cod"
-      ? `Place Order (COD) — ₹${grandTotal.toFixed(2)}`
-      : `Pay ₹${grandTotal.toFixed(2)} (Demo)`;
-
   return (
     <div className="page-container py-5 sm:py-8 max-w-5xl">
       <h1 className="page-title mb-6 sm:mb-8">Checkout</h1>
 
-      <div className="mb-6 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/40 p-4 text-sm">
-        <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+      <div className="mb-6 flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm">
+        <Info className="w-5 h-5 text-primary shrink-0 mt-0.5" />
         <div>
-          <p className="font-semibold text-amber-900 dark:text-amber-100">Demo payment mode</p>
-          <p className="text-amber-800/90 dark:text-amber-200/80 mt-1">
-            {paymentConfig?.message ??
-              "No real money is charged. This mimics Razorpay Checkout until live keys are added."}
+          <p className="font-semibold text-primary">Ordering Process</p>
+          <p className="text-muted-foreground mt-1">
+            Once you place your order, the restaurant will receive a notification and start preparing your food. 
+            You can pay the total amount via <strong>UPI or Cash</strong> when you receive your order.
           </p>
         </div>
       </div>
@@ -164,107 +118,68 @@ export default function CheckoutPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="bg-card border border-card-border rounded-2xl p-6 space-y-5">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5 text-primary" />
-                <h2 className="text-lg font-bold">Razorpay Checkout (Demo)</h2>
-              </div>
-              <span className="text-xs font-medium px-2 py-1 rounded-full bg-primary/10 text-primary">STATIC</span>
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-primary" />
+              <h2 className="text-lg font-bold">Payment Method</h2>
             </div>
 
-            <div className="grid grid-cols-3 gap-2">
-              {(["upi", "card", "cod"] as PaymentMethod[]).map((method) => {
-                const Icon = PAYMENT_ICONS[method];
-                const labels = { upi: "UPI", card: "Card", cod: "COD" };
-                return (
-                  <button
-                    key={method}
-                    type="button"
-                    onClick={() => setPaymentMethod(method)}
-                    className={`flex flex-col items-center gap-1.5 rounded-lg border p-3 text-xs font-medium transition-colors ${
-                      paymentMethod === method
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "border-border hover:border-primary/50"
-                    }`}
-                  >
-                    <Icon className="w-5 h-5" />
-                    {labels[method]}
-                  </button>
-                );
-              })}
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setPaymentMethod("cod")}
+                className={`flex flex-col items-center gap-2 rounded-xl border p-4 text-sm font-medium transition-all ${
+                  paymentMethod === "cod"
+                    ? "border-primary bg-primary/5 ring-1 ring-primary"
+                    : "border-border hover:border-primary/50"
+                }`}
+              >
+                <Banknote className={`w-6 h-6 ${paymentMethod === "cod" ? "text-primary" : "text-muted-foreground"}`} />
+                <span>Cash on Delivery</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setPaymentMethod("upi")}
+                className={`flex flex-col items-center gap-2 rounded-xl border p-4 text-sm font-medium transition-all ${
+                  paymentMethod === "upi"
+                    ? "border-primary bg-primary/5 ring-1 ring-primary"
+                    : "border-border hover:border-primary/50"
+                }`}
+              >
+                <Smartphone className={`w-6 h-6 ${paymentMethod === "upi" ? "text-primary" : "text-muted-foreground"}`} />
+                <span>UPI on Delivery</span>
+              </button>
             </div>
 
-            {paymentMethod === "upi" && (
-              <div className="space-y-2 rounded-lg border border-dashed border-border p-4">
-                <Label htmlFor="upi">UPI ID</Label>
-                <Input
-                  id="upi"
-                  placeholder="yourname@upi"
-                  value={upiId}
-                  onChange={(e) => setUpiId(e.target.value)}
-                />
-                <p className="text-xs text-muted-foreground">Demo: any valid-looking UPI ID will succeed.</p>
-              </div>
-            )}
-
-            {paymentMethod === "card" && (
-              <div className="space-y-3 rounded-lg border border-dashed border-border p-4">
-                <div className="space-y-2">
-                  <Label htmlFor="cardNumber">Card number</Label>
-                  <Input
-                    id="cardNumber"
-                    placeholder="4111 1111 1111 1111"
-                    value={cardNumber}
-                    onChange={(e) => setCardNumber(e.target.value)}
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <Label htmlFor="expiry">Expiry</Label>
-                    <Input id="expiry" placeholder="MM/YY" value={cardExpiry} onChange={(e) => setCardExpiry(e.target.value)} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="cvv">CVV</Label>
-                    <Input id="cvv" placeholder="123" maxLength={4} value={cardCvv} onChange={(e) => setCardCvv(e.target.value)} />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="cardName">Name on card</Label>
-                  <Input id="cardName" placeholder="As on card" value={cardName} onChange={(e) => setCardName(e.target.value)} />
-                </div>
-                {paymentConfig?.demo_fail_card && (
-                  <p className="text-xs text-muted-foreground">
-                    Demo fail card: {paymentConfig.demo_fail_card}
-                  </p>
-                )}
-              </div>
-            )}
-
-            {paymentMethod === "cod" && (
-              <p className="text-sm text-muted-foreground rounded-lg bg-muted/50 p-3">
-                Pay with cash when your order is delivered. No online payment now.
+            <div className="rounded-xl bg-muted/30 p-4 border border-border">
+              <p className="text-sm text-muted-foreground">
+                Total Payable: <span className="font-bold text-foreground">₹{grandTotal.toFixed(2)}</span>
               </p>
-            )}
+              <p className="text-xs text-muted-foreground mt-1">
+                {paymentMethod === "cod" 
+                  ? "Please keep exact change ready if possible." 
+                  : "The delivery partner will show you a QR code to pay via any UPI app."}
+              </p>
+            </div>
 
             <Button
               type="submit"
-              className="w-full h-12 font-semibold"
+              className="w-full h-12 text-base font-bold shadow-lg shadow-primary/20"
               disabled={createOrderMutation.isPending || items.length === 0}
             >
               {createOrderMutation.isPending ? (
                 <>
-                  <Loader2 className="mr-2 w-4 h-4 animate-spin" />
-                  Processing...
+                  <Loader2 className="mr-2 w-5 h-5 animate-spin" />
+                  Placing Order...
                 </>
               ) : (
-                submitLabel
+                `Confirm Order — ₹${grandTotal.toFixed(2)}`
               )}
             </Button>
           </form>
         </div>
 
         <div className="lg:w-80 shrink-0">
-          <div className="bg-card border border-card-border rounded-2xl p-6">
+          <div className="bg-card border border-card-border rounded-2xl p-6 sticky top-24">
             <h2 className="text-lg font-bold text-foreground mb-4">Order Summary</h2>
             <div className="space-y-3">
               {items.map((item) => (
@@ -280,28 +195,30 @@ export default function CheckoutPage() {
                     <p className="text-sm font-medium line-clamp-1">{item.name}</p>
                     <p className="text-xs text-muted-foreground">x{item.quantity}</p>
                   </div>
-                  <span className="text-sm font-semibold">₹{(item.price * item.quantity).toFixed(2)}</span>
+                  <span className="text-sm font-semibold text-foreground">₹{(item.price * item.quantity).toFixed(2)}</span>
                 </div>
               ))}
               <Separator />
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Subtotal</span>
-                <span className="font-medium">₹{total.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Packing Charge</span>
-                <span className="font-medium">₹{packingCharge.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">GST ({gstPercent}%)</span>
-                <span className="font-medium">₹{gstAmount.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Delivery</span>
-                <span className="text-green-600 font-medium">Free</span>
+              <div className="space-y-2 pt-1">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Subtotal</span>
+                  <span className="font-medium text-foreground">₹{total.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Packing Charge</span>
+                  <span className="font-medium text-foreground">₹{packingCharge.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">GST ({gstPercent}%)</span>
+                  <span className="font-medium text-foreground">₹{gstAmount.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Delivery</span>
+                  <span className="text-green-600 font-bold uppercase text-[10px] tracking-wider">Free</span>
+                </div>
               </div>
               <Separator />
-              <div className="flex justify-between font-bold text-lg">
+              <div className="flex justify-between font-bold text-xl pt-1">
                 <span>Total</span>
                 <span className="text-primary">₹{grandTotal.toFixed(2)}</span>
               </div>

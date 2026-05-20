@@ -1,8 +1,9 @@
 from rest_framework import serializers
 from .models import Order, OrderItem
-from .payments import apply_static_payment
 from menu.models import FoodItem, RestaurantConfig
 from menu.serializers import FoodItemSerializer
+from .email_service import send_order_notification_to_admin
+from decimal import Decimal
 
 class OrderItemSerializer(serializers.ModelSerializer):
     food_item = serializers.PrimaryKeyRelatedField(queryset=FoodItem.objects.all())
@@ -24,7 +25,6 @@ class OrderSerializer(serializers.ModelSerializer):
         choices=[c[0] for c in Order.PAYMENT_METHOD],
         default='cod',
     )
-    card_number = serializers.CharField(required=False, allow_blank=True, write_only=True)
 
     class Meta:
         model = Order
@@ -32,7 +32,7 @@ class OrderSerializer(serializers.ModelSerializer):
             'id', 'user', 'status', 'total_price', 'packing_charge', 'gst_amount', 'delivery_charge',
             'created_at', 'address', 'items',
             'payment_method', 'payment_status', 'payment_provider', 'payment_reference',
-            'paid_at', 'card_number',
+            'paid_at',
         )
         read_only_fields = (
             'user', 'total_price', 'packing_charge', 'gst_amount', 'delivery_charge',
@@ -50,28 +50,26 @@ class OrderSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         items_data = validated_data.pop('items')
         payment_method = validated_data.pop('payment_method', 'cod')
-        card_number = validated_data.pop('card_number', '')
-        validated_data.pop('payment_status', None)
-        validated_data.pop('payment_provider', None)
-        validated_data.pop('payment_reference', None)
-        validated_data.pop('paid_at', None)
+        
+        # Explicitly remove read-only/managed fields from validated_data
+        for field in ['payment_status', 'payment_provider', 'payment_reference', 'paid_at']:
+            validated_data.pop(field, None)
+            
         user = self.context['request'].user
 
         # Get restaurant config for charges
         config = RestaurantConfig.objects.first()
-        packing_charge = config.packing_charge if config else 20.00
-        gst_percent = config.gst_percentage if config else 5.00
-        delivery_charge = 0.00 # Default for now, can be updated later
+        packing_charge = config.packing_charge if config else Decimal('20.00')
+        gst_percent = config.gst_percentage if config else Decimal('5.00')
+        delivery_charge = Decimal('0.00')
 
-        subtotal = sum(
-            item_data['food_item'].price * item_data['quantity']
-            for item_data in items_data
-        )
+        # Calculate subtotal
+        subtotal = Decimal('0.00')
+        for item_data in items_data:
+            subtotal += item_data['food_item'].price * item_data['quantity']
         
         # Calculate GST on subtotal
-        from decimal import Decimal
         gst_amount = (subtotal * gst_percent / Decimal('100')).quantize(Decimal('0.01'))
-        
         total_price = subtotal + packing_charge + gst_amount + delivery_charge
 
         order = Order.objects.create(
@@ -80,6 +78,9 @@ class OrderSerializer(serializers.ModelSerializer):
             packing_charge=packing_charge,
             gst_amount=gst_amount,
             delivery_charge=delivery_charge,
+            payment_method=payment_method,
+            payment_status='unpaid',
+            status='pending',
             **validated_data
         )
 
@@ -94,6 +95,7 @@ class OrderSerializer(serializers.ModelSerializer):
                 price=price,
             )
 
-        apply_static_payment(order, payment_method, card_number=card_number)
-        order.save()
+        # Trigger admin notification
+        send_order_notification_to_admin(order)
+
         return order
