@@ -26,6 +26,7 @@ import {
 export default function CheckoutPage() {
   const [address, setAddress] = useState("");
   const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cod");
 
   const { items, total, clearCart } = useCart();
@@ -46,8 +47,12 @@ export default function CheckoutPage() {
       toast({ title: "Cart is empty", description: "Add items before checkout.", variant: "destructive" });
       return;
     }
-    if (!address.trim()) {
-      toast({ title: "Address required", variant: "destructive" });
+    if (!address.trim() || !phone.trim()) {
+      toast({ 
+        title: "Mandatory fields missing", 
+        description: "Please enter both delivery address and mobile number.", 
+        variant: "destructive" 
+      });
       return;
     }
 
@@ -55,6 +60,7 @@ export default function CheckoutPage() {
       {
         data: {
           address: `${name ? name + ", " : ""}${address}`,
+          phone,
           items: items.map((i) => ({ food_item_id: i.food_item_id, quantity: i.quantity })),
           payment_method: paymentMethod,
         },
@@ -102,6 +108,17 @@ export default function CheckoutPage() {
               <div className="space-y-2">
                 <Label htmlFor="name">Full Name</Label>
                 <Input id="name" placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone">Mobile Number *</Label>
+                <Input 
+                  id="phone" 
+                  type="tel"
+                  placeholder="Enter your 10-digit mobile number" 
+                  value={phone} 
+                  onChange={(e) => setPhone(e.target.value)} 
+                  required
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="address">Delivery Address *</Label>

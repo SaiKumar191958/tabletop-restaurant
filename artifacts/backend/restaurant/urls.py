@@ -14,7 +14,12 @@ from accounts.views import (
     AdminUserRoleUpdateView,
 )
 from accounts.dashboard import DashboardStatsView
-from orders.views import OrderCreateListView, AdminOrderListView, OrderStatusUpdateView
+from orders.views import (
+    OrderCreateListView,
+    AdminOrderListView,
+    AdminOrderUpdateView,
+    OrderStatusUpdateView
+)
 from orders.payment_views import PaymentConfigView
 from rest_framework.routers import DefaultRouter
 from menu.views import CategoryViewSet, FoodItemViewSet, ExternalFoodSearchView, RestaurantConfigView
@@ -44,6 +49,7 @@ urlpatterns = [
     path('api/orders/', OrderCreateListView.as_view(), name='orders_list_create'),
     path('api/orders/all/', AdminOrderListView.as_view(), name='admin_orders_all'),
     path('api/orders/<int:pk>/status/', OrderStatusUpdateView.as_view(), name='order_status_update'),
+    path('api/admin/orders/<int:pk>/', AdminOrderUpdateView.as_view(), name='admin_order_update'),
     
     # Admin dashboard
     path('api/admin/dashboard/', DashboardStatsView.as_view(), name='admin_dashboard'),

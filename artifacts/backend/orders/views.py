@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import Order
 from .serializers import OrderSerializer
-from accounts.permissions import IsAdminOrSuperAdmin
+from accounts.permissions import IsAdminOrSuperAdmin, IsSuperAdmin
 
 class OrderCreateListView(generics.ListCreateAPIView):
     serializer_class = OrderSerializer
@@ -16,6 +16,11 @@ class AdminOrderListView(generics.ListAPIView):
     queryset = Order.objects.all().order_by('-created_at')
     serializer_class = OrderSerializer
     permission_classes = (IsAdminOrSuperAdmin,)
+
+class AdminOrderUpdateView(generics.RetrieveUpdateAPIView):
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
+    permission_classes = (IsSuperAdmin,)
 
 class OrderStatusUpdateView(APIView):
     permission_classes = (IsAdminOrSuperAdmin,)

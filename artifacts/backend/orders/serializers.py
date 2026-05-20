@@ -30,7 +30,7 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = (
             'id', 'user', 'status', 'total_price', 'packing_charge', 'gst_amount', 'delivery_charge',
-            'created_at', 'address', 'items',
+            'created_at', 'address', 'phone', 'items',
             'payment_method', 'payment_status', 'payment_provider', 'payment_reference',
             'paid_at',
         )
@@ -99,3 +99,43 @@ class OrderSerializer(serializers.ModelSerializer):
         send_order_notification_to_admin(order)
 
         return order
+
+    def update(self, instance, validated_data):
+        items_data = validated_data.pop('items', None)
+        
+        # Update basic fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        
+        if items_data is not None:
+            # Clear existing items and recreate
+            instance.items.all().delete()
+            
+            # Get restaurant config for charges
+            config = RestaurantConfig.objects.first()
+            packing_charge = config.packing_charge if config else Decimal('20.00')
+            gst_percent = config.gst_percentage if config else Decimal('5.00')
+            delivery_charge = instance.delivery_charge
+
+            subtotal = Decimal('0.00')
+            for item_data in items_data:
+                food_item = item_data['food_item']
+                quantity = item_data['quantity']
+                price = food_item.price * quantity
+                
+                OrderItem.objects.create(
+                    order=instance,
+                    food_item=food_item,
+                    quantity=quantity,
+                    price=price,
+                )
+                subtotal += price
+            
+            # Recalculate totals
+            gst_amount = (subtotal * gst_percent / Decimal('100')).quantize(Decimal('0.01'))
+            instance.gst_amount = gst_amount
+            instance.packing_charge = packing_charge
+            instance.total_price = subtotal + packing_charge + gst_amount + delivery_charge
+
+        instance.save()
+        return instance

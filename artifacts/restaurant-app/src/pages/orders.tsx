@@ -60,7 +60,10 @@ export default function OrdersPage() {
                   <p className="text-sm text-muted-foreground">
                     {new Date(order.created_at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                   </p>
-                  <p className="text-sm text-muted-foreground mt-1">{order.address}</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {order.address}
+                    {order.phone && <span className="block text-xs mt-0.5 font-medium text-foreground/70">📞 {order.phone}</span>}
+                  </p>
                   <PaymentBadge order={order} />
                 </div>
                 <div className="text-right">

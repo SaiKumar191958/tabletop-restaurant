@@ -28,6 +28,7 @@ class Order(models.Model):
     delivery_charge = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     created_at = models.DateTimeField(auto_now_add=True)
     address = models.TextField()
+    phone = models.CharField(max_length=20, default='')
     payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD, default='cod')
     payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS, default='unpaid')
     payment_provider = models.CharField(max_length=20, default='static', blank=True)

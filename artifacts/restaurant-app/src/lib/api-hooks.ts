@@ -52,6 +52,7 @@ export interface Order {
   delivery_charge: number;
   created_at: string;
   address: string;
+  phone: string;
   items?: OrderItem[];
   user?: { id?: number; username: string; email?: string };
   payment_method?: PaymentMethod;
@@ -167,6 +168,7 @@ function normalizeOrder(raw: Record<string, unknown>): Order {
     delivery_charge: Number(raw.delivery_charge ?? 0),
     created_at: String(raw.created_at),
     address: String(raw.address),
+    phone: String(raw.phone ?? ""),
     payment_method: raw.payment_method as PaymentMethod | undefined,
     payment_status: raw.payment_status as PaymentStatus | undefined,
     payment_provider: raw.payment_provider ? String(raw.payment_provider) : undefined,
@@ -515,6 +517,7 @@ export function useDeleteMenuItem(
 
 export interface CreateOrderInput {
   address: string;
+  phone: string;
   items: { food_item_id: number; quantity: number }[];
   payment_method: PaymentMethod;
   card_number?: string;
@@ -527,6 +530,7 @@ export function useCreateOrder(
     mutationFn: async ({ data }) => {
       const payload: Record<string, unknown> = {
         address: data.address,
+        phone: data.phone,
         payment_method: data.payment_method,
         items: data.items.map((i) => ({
           food_item: i.food_item_id,
@@ -549,6 +553,27 @@ export function useUpdateOrderStatus(
   return useMutation({
     mutationFn: async ({ id, data }) => {
       const { data: res } = await api.patch(`orders/${id}/status/`, data);
+      return normalizeOrder(res);
+    },
+    ...options,
+  });
+}
+
+export function useUpdateOrder(
+  options?: UseMutationOptions<Order, Error, { id: number; data: CreateOrderInput }>,
+) {
+  return useMutation({
+    mutationFn: async ({ id, data }) => {
+      const payload: Record<string, unknown> = {
+        address: data.address,
+        phone: data.phone,
+        payment_method: data.payment_method,
+        items: data.items.map((i) => ({
+          food_item: i.food_item_id,
+          quantity: i.quantity,
+        })),
+      };
+      const { data: res } = await api.patch(`admin/orders/${id}/`, payload);
       return normalizeOrder(res);
     },
     ...options,
