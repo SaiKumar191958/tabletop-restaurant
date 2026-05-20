@@ -7,10 +7,16 @@ from accounts.permissions import IsAdminOrSuperAdmin, IsSuperAdmin
 
 class OrderCreateListView(generics.ListCreateAPIView):
     serializer_class = OrderSerializer
-    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [permissions.AllowAny()]
+        return [permissions.IsAuthenticated()]
 
     def get_queryset(self):
-        return Order.objects.filter(user=self.request.user).order_by('-created_at')
+        if self.request.user.is_authenticated:
+            return Order.objects.filter(user=self.request.user).order_by('-created_at')
+        return Order.objects.none()
 
 class AdminOrderListView(generics.ListAPIView):
     queryset = Order.objects.all().order_by('-created_at')

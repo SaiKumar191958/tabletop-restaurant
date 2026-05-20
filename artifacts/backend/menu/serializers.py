@@ -63,6 +63,7 @@ class FoodItemSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'name', 'description', 'price', 'image', 'image_url', 'food_type',
             'is_available', 'rating', 'category', 'category_id',
+            'default_stock', 'current_stock', 'weekday_stock'
         )
 
     def validate(self, attrs):

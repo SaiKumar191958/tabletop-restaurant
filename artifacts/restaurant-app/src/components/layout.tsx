@@ -43,7 +43,7 @@ function Navbar() {
   const restaurantName = config?.name || "Sri Durga Military Hotel";
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b-2 border-gray-300 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="page-container h-14 sm:h-16 flex items-center justify-between gap-2">
         <div className="flex items-center gap-3 sm:gap-6 min-w-0">
           <Link to="/" className="flex items-center gap-2 min-w-0 shrink-0">

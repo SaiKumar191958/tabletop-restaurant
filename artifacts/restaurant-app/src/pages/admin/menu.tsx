@@ -39,6 +39,8 @@ const emptyItemForm = {
   image_url: "",
   imageFile: null as File | null,
   imageMode: "none" as ImageMode,
+  default_stock: "10",
+  current_stock: "10",
 };
 
 const emptyCatForm = {
@@ -110,6 +112,8 @@ export default function AdminMenu() {
       image_url: item.image ?? "",
       imageFile: null,
       imageMode: item.image ? "url" : "none",
+      default_stock: String(item.default_stock ?? 10),
+      current_stock: String(item.current_stock ?? 10),
     });
     setFoodSearch("");
     setDebouncedSearch("");
@@ -128,6 +132,8 @@ export default function AdminMenu() {
       food_type: itemForm.food_type,
       is_available: itemForm.is_available,
       category_id: Number(itemForm.category_id),
+      default_stock: Number(itemForm.default_stock),
+      current_stock: Number(itemForm.current_stock),
     };
     let payload = basePayload;
     if (itemForm.imageMode === "upload" && itemForm.imageFile) payload = { ...basePayload, imageFile: itemForm.imageFile };
@@ -385,6 +391,16 @@ export default function AdminMenu() {
                   <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
                   <SelectContent>{categories?.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}</SelectContent>
                 </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Default Daily Stock</Label>
+                <Input type="number" value={itemForm.default_stock} onChange={e => setItemForm({...itemForm, default_stock: e.target.value})} placeholder="e.g. 10" />
+              </div>
+              <div className="space-y-2">
+                <Label>Current Stock</Label>
+                <Input type="number" value={itemForm.current_stock} onChange={e => setItemForm({...itemForm, current_stock: e.target.value})} placeholder="e.g. 10" />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">

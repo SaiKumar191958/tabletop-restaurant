@@ -17,10 +17,13 @@ def send_order_notification_to_admin(order):
         items_html += f"<li>{item.quantity} x {item.food_item.name} - ₹{item.price}</li>"
     items_html += "</ul>"
 
+    username = order.user.username if order.user else "Guest"
+    user_email = order.user.email if order.user else "N/A"
+
     text_body = (
         f"New Order Received!\n\n"
         f"Order ID: #{order.id}\n"
-        f"Customer: {order.user.username} ({order.user.email})\n"
+        f"Customer: {username} ({user_email})\n"
         f"Phone: {order.phone}\n"
         f"Total Amount: ₹{order.total_price}\n"
         f"Address: {order.address}\n"
@@ -32,7 +35,7 @@ def send_order_notification_to_admin(order):
     <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #eee; border-radius: 12px;">
       <h2 style="color: #e85d04; border-bottom: 2px solid #f5f5f5; padding-bottom: 12px;">New Order Notification</h2>
       <p><strong>Order ID:</strong> #{order.id}</p>
-      <p><strong>Customer:</strong> {order.user.username} ({order.user.email})</p>
+      <p><strong>Customer:</strong> {username} ({user_email})</p>
       <p><strong>Mobile Number:</strong> <a href="tel:{order.phone}" style="color: #e85d04; font-weight: bold;">{order.phone}</a></p>
       <p><strong>Delivery Address:</strong> {order.address}</p>
       <div style="background: #fafafa; padding: 16px; border-radius: 8px; margin: 16px 0;">
@@ -80,4 +83,62 @@ def send_order_notification_to_admin(order):
         return True
     except Exception:
         logger.exception("Failed to send order notification email to admin")
+        return False
+
+def send_stock_alert_to_admin(food_item):
+    """
+    Send an email notification when an item's stock hits 0.
+    """
+    subject = f"STOCK ALERT: {food_item.name} is SOLD OUT"
+    
+    text_body = (
+        f"Stock Alert!\n\n"
+        f"Item: {food_item.name}\n"
+        f"Status: SOLD OUT\n\n"
+        f"Please restock this item in the admin panel if more is available."
+    )
+
+    html_body = f"""
+    <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #eee; border-radius: 12px;">
+      <h2 style="color: #d00000; border-bottom: 2px solid #f5f5f5; padding-bottom: 12px;">Stock Alert</h2>
+      <p>The following item is now <strong>SOLD OUT</strong>:</p>
+      <div style="background: #fff5f5; padding: 20px; border-radius: 8px; border: 1px solid #feb2b2; margin: 16px 0; text-align: center;">
+        <h3 style="margin: 0; color: #c53030;">{food_item.name}</h3>
+      </div>
+      <p style="margin-top: 24px;">
+        <a href="https://tabletop-restaurant.vercel.app/admin/menu" 
+           style="background: #2d3748; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;">
+           Manage Menu Stock
+        </a>
+      </p>
+    </div>
+    """
+
+    try:
+        delivery_mode = getattr(settings, "EMAIL_OTP_DELIVERY", "console")
+        admin_email = getattr(settings, "EMAIL_HOST_USER", "admin@sridurgahotel.local")
+
+        if delivery_mode == "resend" and getattr(settings, "RESEND_API_KEY", None):
+            resend.api_key = settings.RESEND_API_KEY
+            params = {
+                "from": settings.DEFAULT_FROM_EMAIL or "onboarding@resend.dev",
+                "to": [admin_email],
+                "subject": subject,
+                "html": html_body,
+                "text": text_body,
+            }
+            resend.Emails.send(params)
+            return True
+
+        message = EmailMultiAlternatives(
+            subject=subject,
+            body=text_body,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[admin_email],
+        )
+        message.attach_alternative(html_body, "text/html")
+        message.send(fail_silently=False)
+        return True
+    except Exception:
+        logger.exception("Failed to send stock alert email")
         return False

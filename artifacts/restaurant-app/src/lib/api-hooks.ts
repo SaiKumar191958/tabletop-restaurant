@@ -23,6 +23,8 @@ export interface FoodItem {
   rating: number;
   category_id: number;
   category?: Category;
+  default_stock: number;
+  current_stock: number;
 }
 
 export interface OrderItem {
@@ -144,6 +146,8 @@ function normalizeFoodItem(raw: Record<string, unknown>): FoodItem {
     rating: Number(raw.rating ?? 0),
     category_id: Number(categoryId),
     category,
+    default_stock: Number(raw.default_stock ?? 0),
+    current_stock: Number(raw.current_stock ?? 0),
   };
 }
 
@@ -441,6 +445,8 @@ export type MenuItemInput = {
   category_id: number;
   image_url?: string;
   imageFile?: File | null;
+  default_stock?: number;
+  current_stock?: number;
 };
 
 function buildMenuPayload(data: MenuItemInput): FormData | Record<string, unknown> {
@@ -453,6 +459,8 @@ function buildMenuPayload(data: MenuItemInput): FormData | Record<string, unknow
     form.append("is_available", String(data.is_available));
     form.append("category_id", String(data.category_id));
     form.append("image", data.imageFile);
+    if (data.default_stock !== undefined) form.append("default_stock", String(data.default_stock));
+    if (data.current_stock !== undefined) form.append("current_stock", String(data.current_stock));
     return form;
   }
 
@@ -463,6 +471,8 @@ function buildMenuPayload(data: MenuItemInput): FormData | Record<string, unknow
     food_type: data.food_type,
     is_available: data.is_available,
     category_id: data.category_id,
+    default_stock: data.default_stock,
+    current_stock: data.current_stock,
   };
   if (data.image_url !== undefined) {
     payload.image_url = data.image_url;

@@ -40,14 +40,7 @@ function App() {
                     <Route path="/register" element={<RegisterPage />} />
                     <Route path="/menu" element={<MenuPage />} />
                     <Route path="/cart" element={<CartPage />} />
-                    <Route
-                      path="/checkout"
-                      element={
-                        <ProtectedRoute allowedRoles={["user", "admin", "superadmin"]}>
-                          <CheckoutPage />
-                        </ProtectedRoute>
-                      }
-                    />
+                    <Route path="/checkout" element={<CheckoutPage />} />
                     <Route
                       path="/orders"
                       element={

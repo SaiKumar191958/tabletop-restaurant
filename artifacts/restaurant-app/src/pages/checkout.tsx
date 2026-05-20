@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/lib/auth-context";
 import {
   useCreateOrder,
   getListMyOrdersQueryKey,
@@ -42,6 +43,8 @@ export default function CheckoutPage() {
   const gstAmount = (total * gstPercent) / 100;
   const grandTotal = total + packingCharge + gstAmount;
 
+  const { user } = useAuth();
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (items.length === 0) {
@@ -68,17 +71,25 @@ export default function CheckoutPage() {
         },
       },
       {
-        onSuccess: () => {
+        onSuccess: (newOrder) => {
           queryClient.invalidateQueries({ queryKey: getListMyOrdersQueryKey() });
           clearCart();
-          toast({
-            title: "Order Placed Successfully!",
-            description: "The restaurant has been notified. You can pay when you receive your order.",
-          });
-          navigate("/orders");
+          toast.success("Order Placed Successfully!");
+          
+          if (user) {
+            navigate("/orders");
+          } else {
+            // Guest order - show success dialog or redirect to home with a message
+            toast({
+              title: "Order Placed!",
+              description: `Your Order ID is #${newOrder.id}. We'll contact you at ${phone} for delivery.`,
+            });
+            navigate("/");
+          }
         },
-        onError: () => {
-          toast({ title: "Checkout failed", description: "Please try again.", variant: "destructive" });
+        onError: (err: any) => {
+          const detail = err.response?.data?.detail || err.response?.data?.non_field_errors?.[0] || "Please try again.";
+          toast({ title: "Checkout failed", description: detail, variant: "destructive" });
         },
       },
     );

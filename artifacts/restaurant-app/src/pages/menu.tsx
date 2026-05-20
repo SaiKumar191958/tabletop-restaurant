@@ -3,7 +3,7 @@ import { useSearch } from "wouter";
 import { useNavigate } from "react-router-dom";
 import { useListMenuItems, useListCategories } from "@/lib/api-hooks";
 import { useCart } from "@/lib/cart-context";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -29,12 +29,11 @@ export default function MenuPage() {
   });
 
   const { addItem, items: cartItems } = useCart();
-  const { toast } = useToast();
   const navigate = useNavigate();
 
   const handleAddToCart = (item: NonNullable<typeof items>[0]) => {
     addItem({ food_item_id: item.id, name: item.name, price: item.price, image: item.image });
-    toast({ title: "Added to cart", description: `${item.name} has been added.` });
+    toast.success("Item added to the cart");
   };
 
   const clearFilters = () => {
@@ -211,15 +210,17 @@ export default function MenuPage() {
                         <span className="text-4xl">🍽️</span>
                       </div>
                     )}
-                    <div className="absolute top-2 left-2">
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${item.food_type === "veg" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                    <div className="absolute top-2 left-2 flex flex-col gap-1">
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold ${item.food_type === "veg" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
                         <Leaf className="w-3 h-3" />
                         {item.food_type === "veg" ? "Veg" : "Non-Veg"}
                       </span>
                     </div>
-                    {!item.is_available && (
+                    {(!item.is_available || item.current_stock === 0) && (
                       <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                        <span className="bg-black/70 text-white text-sm font-medium px-3 py-1 rounded-full">Unavailable</span>
+                        <span className="bg-black/70 text-white text-xs sm:text-sm font-medium px-3 py-1 rounded-full uppercase tracking-wider">
+                          {item.current_stock === 0 ? "Sold Out" : "Unavailable"}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -232,15 +233,18 @@ export default function MenuPage() {
                       </span>
                     </div>
                     <p className="text-muted-foreground text-sm line-clamp-2 mb-3">{item.description}</p>
+                    {item.current_stock > 0 && item.current_stock <= 5 && (
+                      <p className="text-[10px] font-bold text-orange-600 mb-2 uppercase tracking-tight">Only {item.current_stock} left!</p>
+                    )}
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-base sm:text-lg font-bold text-primary">₹{item.price.toFixed(2)}</span>
                       <Button
                         size="sm"
                         onClick={() => handleAddToCart(item)}
-                        disabled={!item.is_available}
+                        disabled={!item.is_available || item.current_stock === 0}
                         className="h-8 shrink-0 text-xs sm:text-sm"
                       >
-                        {!item.is_available ? "Unavailable" : "Add to cart"}
+                        {item.current_stock === 0 ? "Sold Out" : !item.is_available ? "Unavailable" : "Add to cart"}
                       </Button>
                     </div>
                   </div>

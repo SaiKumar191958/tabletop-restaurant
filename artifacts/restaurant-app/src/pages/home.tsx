@@ -23,7 +23,7 @@ export default function Home() {
 
   const handleAddToCart = (item: FoodItem) => {
     addItem({ food_item_id: item.id, name: item.name, price: item.price, image: item.image });
-    toast.success(`${item.name} added to cart`);
+    toast.success("Item added to the cart");
   };
 
   const restaurantName = config?.name || "Sri Durga Military Hotel";
@@ -150,12 +150,17 @@ export default function Home() {
                         <span className="text-5xl">🍽️</span>
                       </div>
                     )}
-                    <div className="absolute top-3 left-3">
+                    <div className="absolute top-3 left-3 flex flex-col gap-1">
                       <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${item.food_type === "veg" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
                         <Leaf className="w-3 h-3" />
                         {item.food_type === "veg" ? "Veg" : "Non-Veg"}
                       </span>
                     </div>
+                    {item.current_stock === 0 && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                        <span className="bg-black/70 text-white text-sm font-medium px-3 py-1 rounded-full uppercase tracking-wider">Sold Out</span>
+                      </div>
+                    )}
                     <div className="absolute top-3 right-3">
                       <span className="inline-flex items-center gap-1 bg-black/70 text-white px-2 py-1 rounded-full text-xs font-semibold">
                         <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
@@ -171,9 +176,10 @@ export default function Home() {
                       <Button 
                         size="sm" 
                         onClick={() => handleAddToCart(item)} 
+                        disabled={item.current_stock === 0}
                         className="h-8 shrink-0 text-xs sm:text-sm"
                       >
-                        Add to cart
+                        {item.current_stock === 0 ? "Sold Out" : "Add to cart"}
                       </Button>
                     </div>
                   </div>
