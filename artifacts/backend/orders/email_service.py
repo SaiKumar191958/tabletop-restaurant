@@ -21,6 +21,7 @@ def send_order_notification_to_admin(order):
         f"New Order Received!\n\n"
         f"Order ID: #{order.id}\n"
         f"Customer: {order.user.username} ({order.user.email})\n"
+        f"Phone: {order.phone}\n"
         f"Total Amount: ₹{order.total_price}\n"
         f"Address: {order.address}\n"
         f"Payment Method: {order.get_payment_method_display()}\n\n"
@@ -32,6 +33,7 @@ def send_order_notification_to_admin(order):
       <h2 style="color: #e85d04; border-bottom: 2px solid #f5f5f5; padding-bottom: 12px;">New Order Notification</h2>
       <p><strong>Order ID:</strong> #{order.id}</p>
       <p><strong>Customer:</strong> {order.user.username} ({order.user.email})</p>
+      <p><strong>Mobile Number:</strong> <a href="tel:{order.phone}" style="color: #e85d04; font-weight: bold;">{order.phone}</a></p>
       <p><strong>Delivery Address:</strong> {order.address}</p>
       <div style="background: #fafafa; padding: 16px; border-radius: 8px; margin: 16px 0;">
         <p style="margin-top: 0;"><strong>Items Ordered:</strong></p>
