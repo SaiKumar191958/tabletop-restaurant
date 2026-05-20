@@ -22,11 +22,6 @@ export default function Home() {
   const navigate = useNavigate();
 
   const handleAddToCart = (item: FoodItem) => {
-    const isInCart = cartItems.some(i => i.food_item_id === item.id);
-    if (isInCart) {
-      navigate("/cart");
-      return;
-    }
     addItem({ food_item_id: item.id, name: item.name, price: item.price, image: item.image });
     toast.success(`${item.name} added to cart`);
   };
@@ -176,9 +171,9 @@ export default function Home() {
                       <Button 
                         size="sm" 
                         onClick={() => handleAddToCart(item)} 
-                        className={`h-8 shrink-0 text-xs sm:text-sm ${cartItems.some(i => i.food_item_id === item.id) ? "bg-green-600 hover:bg-green-700" : ""}`}
+                        className="h-8 shrink-0 text-xs sm:text-sm"
                       >
-                        {cartItems.some(i => i.food_item_id === item.id) ? "Proceed" : "Add to cart"}
+                        Add to cart
                       </Button>
                     </div>
                   </div>

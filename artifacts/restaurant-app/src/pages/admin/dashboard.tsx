@@ -30,7 +30,7 @@ export default function AdminDashboard() {
 
   const statCards = [
     { label: "Total Orders", value: stats?.total_orders ?? 0, icon: ShoppingBag, color: "text-blue-600", bg: "bg-blue-50" },
-    { label: "Total Revenue", value: `₹{(stats?.total_revenue ?? 0).toFixed(2)}`, icon: Banknote, color: "text-green-600", bg: "bg-green-50" },
+    { label: "Total Revenue", value: `₹${(stats?.total_revenue ?? 0).toFixed(2)}`, icon: Banknote, color: "text-green-600", bg: "bg-green-50" },
     { label: "Total Users", value: stats?.total_users ?? 0, icon: Users, color: "text-purple-600", bg: "bg-purple-50" },
     { label: "Menu Items", value: stats?.total_menu_items ?? 0, icon: UtensilsCrossed, color: "text-orange-600", bg: "bg-orange-50" },
   ];

@@ -33,11 +33,6 @@ export default function MenuPage() {
   const navigate = useNavigate();
 
   const handleAddToCart = (item: NonNullable<typeof items>[0]) => {
-    const isInCart = cartItems.some(i => i.food_item_id === item.id);
-    if (isInCart) {
-      navigate("/cart");
-      return;
-    }
     addItem({ food_item_id: item.id, name: item.name, price: item.price, image: item.image });
     toast({ title: "Added to cart", description: `${item.name} has been added.` });
   };
@@ -243,9 +238,9 @@ export default function MenuPage() {
                         size="sm"
                         onClick={() => handleAddToCart(item)}
                         disabled={!item.is_available}
-                        className={`h-8 shrink-0 text-xs sm:text-sm ${cartItems.some(i => i.food_item_id === item.id) ? "bg-green-600 hover:bg-green-700" : ""}`}
+                        className="h-8 shrink-0 text-xs sm:text-sm"
                       >
-                        {!item.is_available ? "Unavailable" : cartItems.some(i => i.food_item_id === item.id) ? "Proceed" : "Add to cart"}
+                        {!item.is_available ? "Unavailable" : "Add to cart"}
                       </Button>
                     </div>
                   </div>
