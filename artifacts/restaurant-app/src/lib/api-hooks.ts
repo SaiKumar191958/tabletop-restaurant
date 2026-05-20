@@ -222,8 +222,8 @@ export function useRestaurantConfig(
   return useQuery({
     queryKey: getRestaurantConfigQueryKey(),
     queryFn: async () => {
-      const { data } = await api.get<RestaurantConfig>("restaurant/config/");
-      return data;
+      const { data } = await api.get<Record<string, unknown>>("restaurant/config/");
+      return normalizeRestaurantConfig(data);
     },
     staleTime: 300_000,
     ...options,
@@ -544,6 +544,16 @@ export function useUpdateOrderStatus(
 
 export function useUpdateUserRole(
   options?: UseMutationOptions<User, Error, { id: number; data: { role: string } }>,
+) {
+  return useMutation({
+    mutationFn: async ({ id, data }) => {
+      const { data: res } = await api.patch(`admin/users/${id}/role/`, data);
+      return normalizeUser(res);
+    },
+    ...options,
+  });
+}
+ptions<User, Error, { id: number; data: { role: string } }>,
 ) {
   return useMutation({
     mutationFn: async ({ id, data }) => {
