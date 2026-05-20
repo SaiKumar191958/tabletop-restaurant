@@ -50,7 +50,9 @@ export default function CheckoutPage() {
   const { data: paymentConfig } = usePaymentConfig();
 
   const packingCharge = config?.packing_charge || 20;
-  const grandTotal = total + packingCharge;
+  const gstPercent = config?.gst_percentage || 5;
+  const gstAmount = (total * gstPercent) / 100;
+  const grandTotal = total + packingCharge + gstAmount;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -289,6 +291,10 @@ export default function CheckoutPage() {
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Packing Charge</span>
                 <span className="font-medium">₹{packingCharge.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">GST ({gstPercent}%)</span>
+                <span className="font-medium">₹{gstAmount.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Delivery</span>

@@ -38,6 +38,7 @@ export type PaymentStatus = "unpaid" | "paid" | "failed";
 export interface RestaurantConfig {
   name: string;
   packing_charge: number;
+  gst_percentage: number;
   delivery_charge_info: string;
   bulk_order_info: string;
 }
@@ -47,6 +48,7 @@ export interface Order {
   status: string;
   total_price: number;
   packing_charge: number;
+  gst_amount: number;
   delivery_charge: number;
   created_at: string;
   address: string;
@@ -161,6 +163,7 @@ function normalizeOrder(raw: Record<string, unknown>): Order {
     status: String(raw.status),
     total_price: Number(raw.total_price),
     packing_charge: Number(raw.packing_charge ?? 0),
+    gst_amount: Number(raw.gst_amount ?? 0),
     delivery_charge: Number(raw.delivery_charge ?? 0),
     created_at: String(raw.created_at),
     address: String(raw.address),
@@ -199,6 +202,7 @@ function normalizeRestaurantConfig(raw: Record<string, unknown>): RestaurantConf
   return {
     name: String(raw.name),
     packing_charge: Number(raw.packing_charge ?? 0),
+    gst_percentage: Number(raw.gst_percentage ?? 5.00),
     delivery_charge_info: String(raw.delivery_charge_info ?? ""),
     bulk_order_info: String(raw.bulk_order_info ?? ""),
   };

@@ -29,6 +29,7 @@ class FoodItem(models.Model):
 class RestaurantConfig(models.Model):
     name = models.CharField(max_length=200, default="Sri Durga Military Hotel")
     packing_charge = models.DecimalField(max_digits=8, decimal_places=2, default=20.00)
+    gst_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=5.00)
     delivery_charge_info = models.CharField(max_length=255, default="Delivery charges depend on distance")
     bulk_order_info = models.CharField(max_length=255, default="Bulk order available (6hrs advance booking)")
 
