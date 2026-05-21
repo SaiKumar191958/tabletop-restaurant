@@ -85,8 +85,11 @@ class OrderSerializer(serializers.ModelSerializer):
             if config.weekday_timing and current_day in config.weekday_timing:
                 day_timing = config.weekday_timing[current_day]
                 if 'open' in day_timing and 'close' in day_timing:
-                    opening = datetime.datetime.strptime(day_timing['open'], '%H:%M').time()
-                    closing = datetime.datetime.strptime(day_timing['close'], '%H:%M').time()
+                    try:
+                        opening = datetime.datetime.strptime(day_timing['open'], '%H:%M').time()
+                        closing = datetime.datetime.strptime(day_timing['close'], '%H:%M').time()
+                    except ValueError:
+                        pass
             
             if not (opening <= current_time <= closing):
                 is_open = False
