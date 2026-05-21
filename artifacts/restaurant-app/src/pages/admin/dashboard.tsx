@@ -1,6 +1,8 @@
 import { useGetDashboardStats } from "@/lib/api-hooks";
+import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ShoppingBag, Banknote, Users, UtensilsCrossed, TrendingUp } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ShoppingBag, Banknote, Users, UtensilsCrossed, TrendingUp, Settings } from "lucide-react";
 
 const STATUS_COLORS: Record<string, string> = {
   pending:   "bg-yellow-500",
@@ -39,9 +41,17 @@ export default function AdminDashboard() {
 
   return (
     <div className="page-container py-5 sm:py-8">
-      <div className="flex items-center gap-3 mb-6 sm:mb-8">
-        <TrendingUp className="w-6 h-6 sm:w-7 sm:h-7 text-primary shrink-0" />
-        <h1 className="page-title">Dashboard</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
+        <div className="flex items-center gap-3">
+          <TrendingUp className="w-6 h-6 sm:w-7 sm:h-7 text-primary shrink-0" />
+          <h1 className="page-title">Dashboard</h1>
+        </div>
+        <Link to="/admin/settings">
+          <Button className="gap-2">
+            <Settings className="w-4 h-4" />
+            Restaurant Settings
+          </Button>
+        </Link>
       </div>
 
       {/* Stat cards */}

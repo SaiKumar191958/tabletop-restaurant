@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { useRestaurantConfig, useUpdateRestaurantConfig } from "@/lib/api-hooks";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Clock, Settings, Save, Loader2, Calendar } from "lucide-react";
+import { Clock, Settings, Save, Loader2, Calendar, ArrowLeft } from "lucide-react";
 import { toast } from "react-hot-toast";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -83,9 +84,17 @@ export default function AdminSettings() {
 
   return (
     <div className="page-container py-5 sm:py-8 max-w-4xl">
-      <div className="flex items-center gap-3 mb-6 sm:mb-8">
-        <Settings className="w-6 h-6 sm:w-7 sm:h-7 text-primary shrink-0" />
-        <h1 className="page-title">Restaurant Settings</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
+        <div className="flex items-center gap-3">
+          <Settings className="w-6 h-6 sm:w-7 sm:h-7 text-primary shrink-0" />
+          <h1 className="page-title">Restaurant Settings</h1>
+        </div>
+        <Link to="/admin/dashboard">
+          <Button variant="ghost" className="gap-2">
+            <ArrowLeft className="w-4 h-4" />
+            Back to Dashboard
+          </Button>
+        </Link>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">

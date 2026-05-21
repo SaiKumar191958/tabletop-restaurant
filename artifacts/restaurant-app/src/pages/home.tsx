@@ -21,8 +21,20 @@ export default function Home() {
   const { config } = useRestaurant();
   const navigate = useNavigate();
 
+  const isRestaurantOpen = config?.is_open ?? true;
+
   const handleAddToCart = (item: FoodItem) => {
-    addItem({ food_item_id: item.id, name: item.name, price: item.price, image: item.image });
+    if (!isRestaurantOpen) {
+      toast.error("Restaurant is currently closed");
+      return;
+    }
+    addItem({ 
+      food_item_id: item.id, 
+      name: item.name, 
+      price: item.price, 
+      image: item.image,
+      current_stock: item.current_stock 
+    });
     toast.success("Item added to the cart");
   };
 
@@ -156,9 +168,9 @@ export default function Home() {
                         {item.food_type === "veg" ? "Veg" : "Non-Veg"}
                       </span>
                     </div>
-                    {item.current_stock === 0 && (
+                    {(!item.is_available || item.current_stock === 0 || !isRestaurantOpen) && (
                       <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                        <span className="bg-black/70 text-white text-sm font-medium px-3 py-1 rounded-full uppercase tracking-wider">Sold Out</span>
+                        <span className="bg-black/70 text-white text-sm font-medium px-3 py-1 rounded-full uppercase tracking-wider">Not Available</span>
                       </div>
                     )}
                     <div className="absolute top-3 right-3">
@@ -176,10 +188,10 @@ export default function Home() {
                       <Button 
                         size="sm" 
                         onClick={() => handleAddToCart(item)} 
-                        disabled={item.current_stock === 0}
+                        disabled={!item.is_available || item.current_stock === 0 || !isRestaurantOpen}
                         className="h-8 shrink-0 text-xs sm:text-sm"
                       >
-                        {item.current_stock === 0 ? "Sold Out" : "Add to cart"}
+                        {(!item.is_available || item.current_stock === 0 || !isRestaurantOpen) ? "Not Available" : "Add to cart"}
                       </Button>
                     </div>
                   </div>
