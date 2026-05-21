@@ -230,7 +230,7 @@ export default function MenuPage() {
                         {item.food_type === "veg" ? "Veg" : "Non-Veg"}
                       </span>
                     </div>
-                    {(!item.is_available || item.current_stock === 0 || !isRestaurantOpen) && (
+                    {(!item.is_available || item.current_stock <= 0 || !isRestaurantOpen) && (
                       <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                         <span className="bg-black/70 text-white text-xs sm:text-sm font-medium px-3 py-1 rounded-full uppercase tracking-wider">
                           Not Available
@@ -255,10 +255,10 @@ export default function MenuPage() {
                       <Button
                         size="sm"
                         onClick={() => handleAddToCart(item)}
-                        disabled={!item.is_available || item.current_stock === 0 || !isRestaurantOpen}
+                        disabled={!item.is_available || item.current_stock <= 0 || !isRestaurantOpen}
                         className="h-8 shrink-0 text-xs sm:text-sm"
                       >
-                        {(!item.is_available || item.current_stock === 0 || !isRestaurantOpen) ? "Not Available" : "Add to cart"}
+                        {(!item.is_available || item.current_stock <= 0 || !isRestaurantOpen) ? "Not Available" : "Add to cart"}
                       </Button>
                     </div>
                   </div>
