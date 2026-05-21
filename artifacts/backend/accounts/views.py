@@ -105,19 +105,21 @@ class GoogleLoginView(APIView):
                 raise ValueError('Wrong issuer.')
 
             email = idinfo['email']
-            username = email.split('@')[0]
             first_name = idinfo.get('given_name', '')
             last_name = idinfo.get('family_name', '')
 
             # Find or create user
-            user, created = CustomUser.objects.get_or_create(
-                email=email,
-                defaults={
-                    'username': f"{username}_{idinfo['sub'][:5]}",
-                    'first_name': first_name,
-                    'last_name': last_name,
-                }
-            )
+            user = CustomUser.objects.filter(email=email).first()
+            if not user:
+                from .utils import generate_unique_username
+                username, member_id = generate_unique_username(first_name, last_name, email=email)
+                user = CustomUser.objects.create(
+                    email=email,
+                    username=username,
+                    first_name=first_name,
+                    last_name=last_name,
+                    member_id=member_id,
+                )
 
             tokens = _tokens_for_user(user)
             return Response({

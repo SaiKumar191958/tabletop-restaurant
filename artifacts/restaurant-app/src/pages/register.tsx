@@ -12,7 +12,7 @@ type Step = "details" | "otp";
 
 export default function RegisterPage() {
   const [step, setStep] = useState<Step>("details");
-  const [form, setForm] = useState({ username: "", email: "", phone: "" });
+  const [form, setForm] = useState({ firstName: "", lastName: "", email: "", phone: "" });
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [demoOtp, setDemoOtp] = useState<string | null>(null);
@@ -25,7 +25,7 @@ export default function RegisterPage() {
 
   const handleRequestOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.username.trim() || !form.email.trim()) {
+    if (!form.firstName.trim() || !form.lastName.trim() || !form.email.trim()) {
       setShowValidationErrors(true);
       toast.error("Please enter the mandatory fields");
       return;
@@ -60,7 +60,8 @@ export default function RegisterPage() {
         email: form.email.trim(),
         otp: otp.trim(),
         purpose: "register",
-        username: form.username.trim(),
+        first_name: form.firstName.trim(),
+        last_name: form.lastName.trim(),
         phone: form.phone.trim(),
       });
       await login(data.access, data.refresh);
@@ -97,19 +98,35 @@ export default function RegisterPage() {
 
           {step === "details" ? (
             <form onSubmit={handleRequestOtp} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="username" className={showValidationErrors && !form.username.trim() ? "text-destructive" : ""}>
-                  Username *
-                </Label>
-                <Input
-                  id="username"
-                  name="username"
-                  placeholder="johndoe"
-                  value={form.username}
-                  onChange={handleChange}
-                  required
-                  className={showValidationErrors && !form.username.trim() ? "border-destructive focus-visible:ring-destructive" : ""}
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="firstName" className={showValidationErrors && !form.firstName.trim() ? "text-destructive" : ""}>
+                    First Name *
+                  </Label>
+                  <Input
+                    id="firstName"
+                    name="firstName"
+                    placeholder="John"
+                    value={form.firstName}
+                    onChange={handleChange}
+                    required
+                    className={showValidationErrors && !form.firstName.trim() ? "border-destructive focus-visible:ring-destructive" : ""}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lastName" className={showValidationErrors && !form.lastName.trim() ? "text-destructive" : ""}>
+                    Last Name *
+                  </Label>
+                  <Input
+                    id="lastName"
+                    name="lastName"
+                    placeholder="Doe"
+                    value={form.lastName}
+                    onChange={handleChange}
+                    required
+                    className={showValidationErrors && !form.lastName.trim() ? "border-destructive focus-visible:ring-destructive" : ""}
+                  />
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email" className={showValidationErrors && !form.email.trim() ? "text-destructive" : ""}>

@@ -14,6 +14,7 @@ class CustomUser(AbstractUser):
     phone = models.CharField(max_length=15, blank=True)
     device_id = models.CharField(max_length=255, blank=True, null=True, unique=True)
     profile_image = models.ImageField(upload_to='profiles/', blank=True)
+    member_id = models.CharField(max_length=20, unique=True, blank=True, null=True)
 
 class UserAddress(models.Model):
     ADDRESS_TYPES = [

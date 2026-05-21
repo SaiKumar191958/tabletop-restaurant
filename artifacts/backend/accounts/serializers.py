@@ -24,4 +24,6 @@ class VerifyOTPSerializer(serializers.Serializer):
     otp = serializers.CharField(min_length=6, max_length=6)
     purpose = serializers.ChoiceField(choices=['login', 'register'])
     username = serializers.CharField(required=False, allow_blank=True, max_length=150)
+    first_name = serializers.CharField(required=False, allow_blank=True, max_length=150)
+    last_name = serializers.CharField(required=False, allow_blank=True, max_length=150)
     phone = serializers.CharField(required=False, allow_blank=True, max_length=15)

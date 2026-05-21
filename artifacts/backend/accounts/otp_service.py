@@ -167,6 +167,8 @@ def verify_otp(
     purpose: str,
     *,
     username: str = "",
+    first_name: str = "",
+    last_name: str = "",
     phone: str = "",
 ) -> CustomUser:
     email = _normalize_email(email)
@@ -203,17 +205,25 @@ def verify_otp(
             raise LookupError("No account found with this email.")
         return user
 
-    username = username.strip()
-    if not username:
-        raise ValueError("Username is required for registration.")
-
-    if CustomUser.objects.filter(username__iexact=username).exists():
-        raise ValueError("This username is already taken.")
+    # Registration flow
+    first_name = first_name.strip()
+    last_name = last_name.strip()
+    
+    from .utils import generate_unique_username
+    
+    generated_username, member_id = generate_unique_username(first_name, last_name, email=email)
+    
+    # If the user explicitly provided a username and it's unique, use it
+    if username.strip() and not CustomUser.objects.filter(username__iexact=username.strip()).exists():
+        generated_username = username.strip()
 
     user = CustomUser.objects.create(
-        username=username,
+        username=generated_username,
         email=email,
+        first_name=first_name,
+        last_name=last_name,
         phone=phone.strip(),
+        member_id=member_id,
         role="user",
     )
     user.set_unusable_password()
