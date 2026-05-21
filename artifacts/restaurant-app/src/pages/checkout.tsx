@@ -435,31 +435,6 @@ export default function CheckoutPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Guest Acknowledge Modal */}
-      <Dialog open={guestAcknowledgeOpen} onOpenChange={setGuestOpen}>
-        <DialogContent className="sm:max-w-[400px] rounded-2xl p-6">
-          <DialogHeader>
-            <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mb-4">
-              <Info className="w-6 h-6 text-orange-600" />
-            </div>
-            <DialogTitle className="text-xl">Notice for Guest Orders</DialogTitle>
-          </DialogHeader>
-          <div className="py-4 space-y-4">
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Guest users cannot use the delivery service. All guest orders are available for <span className="font-bold text-foreground">restaurant pickup only</span>.
-            </p>
-            <p className="text-xs bg-muted p-3 rounded-lg border border-border italic">
-              Please sign in with Google if you require delivery to your home or office.
-            </p>
-          </div>
-          <DialogFooter>
-            <Button className="w-full h-11" onClick={confirmGuestAccess}>
-              I Understand, Continue to Pickup
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       {/* New Address Modal */}
       <Dialog open={addressDialogOpen} onOpenChange={setAddressOpen}>
         <DialogContent className="sm:max-w-[450px] rounded-2xl">
