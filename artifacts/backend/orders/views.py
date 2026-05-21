@@ -16,7 +16,13 @@ class OrderCreateListView(generics.ListCreateAPIView):
     def get_queryset(self):
         if self.request.user.is_authenticated:
             return Order.objects.filter(user=self.request.user).order_by('-created_at')
+
+        device_id = self.request.query_params.get('device_id')
+        if device_id:
+            return Order.objects.filter(device_id=device_id, is_guest=True).order_by('-created_at')
+
         return Order.objects.none()
+
 
 class AdminOrderListView(generics.ListAPIView):
     queryset = Order.objects.all().order_by('-created_at')

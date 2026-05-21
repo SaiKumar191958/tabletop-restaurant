@@ -1,6 +1,8 @@
 import { useListMyOrders } from "@/lib/api-hooks";
 import { PaymentBadge } from "@/components/payment-badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/lib/auth-context";
+import { getDeviceId } from "@/lib/utils";
 import { Package, Clock, CheckCircle, XCircle, Truck } from "lucide-react";
 
 const STATUS_CONFIG = {
@@ -12,7 +14,9 @@ const STATUS_CONFIG = {
 } as const;
 
 export default function OrdersPage() {
-  const { data: orders, isLoading } = useListMyOrders();
+  const { user } = useAuth();
+  const deviceId = getDeviceId();
+  const { data: orders, isLoading } = useListMyOrders(user ? undefined : deviceId);
 
   if (isLoading) {
     return (

@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { getDeviceId } from "@/lib/utils";
 import {
   MapPin,
   Smartphone,
@@ -61,6 +62,8 @@ export default function CheckoutPage() {
       return;
     }
 
+    const deviceId = getDeviceId();
+
     createOrderMutation.mutate(
       {
         data: {
@@ -68,23 +71,24 @@ export default function CheckoutPage() {
           phone,
           items: items.map((i) => ({ food_item_id: i.food_item_id, quantity: i.quantity })),
           payment_method: paymentMethod,
+          device_id: !user ? deviceId : undefined,
         },
       },
       {
         onSuccess: (newOrder) => {
-          queryClient.invalidateQueries({ queryKey: getListMyOrdersQueryKey() });
+          queryClient.invalidateQueries({ queryKey: getListMyOrdersQueryKey(user ? undefined : deviceId) });
           clearCart();
-          toast.success("Order Placed Successfully!");
           
           if (user) {
+            toast({ title: "Order Placed Successfully!", variant: "default" });
             navigate("/orders");
           } else {
-            // Guest order - show success dialog or redirect to home with a message
+            // Guest order
             toast({
               title: "Order Placed!",
               description: `Your Order ID is #${newOrder.id}. We'll contact you at ${phone} for delivery.`,
             });
-            navigate("/");
+            navigate("/orders");
           }
         },
         onError: (err: any) => {

@@ -41,14 +41,7 @@ function App() {
                     <Route path="/menu" element={<MenuPage />} />
                     <Route path="/cart" element={<CartPage />} />
                     <Route path="/checkout" element={<CheckoutPage />} />
-                    <Route
-                      path="/orders"
-                      element={
-                        <ProtectedRoute allowedRoles={["user", "admin", "superadmin"]}>
-                          <OrdersPage />
-                        </ProtectedRoute>
-                      }
-                    />
+                    <Route path="/orders" element={<OrdersPage />} />
                     <Route
                       path="/admin/dashboard"
                       element={

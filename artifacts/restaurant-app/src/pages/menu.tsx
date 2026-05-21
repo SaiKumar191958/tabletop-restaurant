@@ -21,6 +21,7 @@ export default function MenuPage() {
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
 
   const { data: categories } = useListCategories();
+  const { config: restaurantConfig } = useRestaurant();
   const { data: items, isLoading } = useListMenuItems({
     category_id: selectedCat ?? undefined,
     food_type: foodType ?? undefined,
@@ -31,8 +32,20 @@ export default function MenuPage() {
   const { addItem, items: cartItems } = useCart();
   const navigate = useNavigate();
 
+  const isRestaurantOpen = restaurantConfig?.is_open ?? true;
+
   const handleAddToCart = (item: NonNullable<typeof items>[0]) => {
-    addItem({ food_item_id: item.id, name: item.name, price: item.price, image: item.image });
+    if (!isRestaurantOpen) {
+      toast.error("Restaurant is currently closed");
+      return;
+    }
+    addItem({ 
+      food_item_id: item.id, 
+      name: item.name, 
+      price: item.price, 
+      image: item.image,
+      current_stock: item.current_stock 
+    });
     toast.success("Item added to the cart");
   };
 
@@ -216,10 +229,10 @@ export default function MenuPage() {
                         {item.food_type === "veg" ? "Veg" : "Non-Veg"}
                       </span>
                     </div>
-                    {(!item.is_available || item.current_stock === 0) && (
+                    {(!item.is_available || item.current_stock === 0 || !isRestaurantOpen) && (
                       <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                         <span className="bg-black/70 text-white text-xs sm:text-sm font-medium px-3 py-1 rounded-full uppercase tracking-wider">
-                          {item.current_stock === 0 ? "Sold Out" : "Unavailable"}
+                          Not Available
                         </span>
                       </div>
                     )}
@@ -241,10 +254,10 @@ export default function MenuPage() {
                       <Button
                         size="sm"
                         onClick={() => handleAddToCart(item)}
-                        disabled={!item.is_available || item.current_stock === 0}
+                        disabled={!item.is_available || item.current_stock === 0 || !isRestaurantOpen}
                         className="h-8 shrink-0 text-xs sm:text-sm"
                       >
-                        {item.current_stock === 0 ? "Sold Out" : !item.is_available ? "Unavailable" : "Add to cart"}
+                        {(!item.is_available || item.current_stock === 0 || !isRestaurantOpen) ? "Not Available" : "Add to cart"}
                       </Button>
                     </div>
                   </div>

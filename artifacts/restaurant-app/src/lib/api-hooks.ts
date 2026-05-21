@@ -43,6 +43,7 @@ export interface RestaurantConfig {
   gst_percentage: number;
   delivery_charge_info: string;
   bulk_order_info: string;
+  is_open: boolean;
 }
 
 export interface Order {
@@ -57,6 +58,7 @@ export interface Order {
   phone: string;
   items?: OrderItem[];
   user?: { id?: number; username: string; email?: string };
+  device_id?: string;
   payment_method?: PaymentMethod;
   payment_status?: PaymentStatus;
   payment_provider?: string;
@@ -211,6 +213,7 @@ function normalizeRestaurantConfig(raw: Record<string, unknown>): RestaurantConf
     gst_percentage: Number(raw.gst_percentage ?? 5.00),
     delivery_charge_info: String(raw.delivery_charge_info ?? ""),
     bulk_order_info: String(raw.bulk_order_info ?? ""),
+    is_open: Boolean(raw.is_open ?? true),
   };
 }
 
@@ -221,7 +224,7 @@ export const getListCategoriesQueryKey = () => ["categories"] as const;
 export const getListMenuItemsQueryKey = (params?: ListMenuItemsParams) =>
   ["menu", params ?? {}] as const;
 
-export const getListMyOrdersQueryKey = () => ["orders", "mine"] as const;
+export const getListMyOrdersQueryKey = (deviceId?: string) => ["orders", "mine", deviceId ?? "auth"] as const;
 
 export const getListAllOrdersQueryKey = () => ["orders", "all"] as const;
 
@@ -317,12 +320,14 @@ export function useListMenuItems(
 }
 
 export function useListMyOrders(
+  deviceId?: string,
   options?: Omit<UseQueryOptions<Order[]>, "queryKey" | "queryFn">,
 ) {
   return useQuery({
-    queryKey: getListMyOrdersQueryKey(),
+    queryKey: getListMyOrdersQueryKey(deviceId),
     queryFn: async () => {
-      const { data } = await api.get("orders/");
+      const params = deviceId ? { device_id: deviceId } : {};
+      const { data } = await api.get("orders/", { params });
       const list = Array.isArray(data) ? data : data.results ?? [];
       return (list as Record<string, unknown>[]).map(normalizeOrder);
     },
@@ -531,6 +536,7 @@ export interface CreateOrderInput {
   items: { food_item_id: number; quantity: number }[];
   payment_method: PaymentMethod;
   card_number?: string;
+  device_id?: string;
 }
 
 export function useCreateOrder(
@@ -542,6 +548,7 @@ export function useCreateOrder(
         address: data.address,
         phone: data.phone,
         payment_method: data.payment_method,
+        device_id: data.device_id,
         items: data.items.map((i) => ({
           food_item: i.food_item_id,
           quantity: i.quantity,

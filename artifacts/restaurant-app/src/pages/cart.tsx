@@ -9,6 +9,7 @@ export default function CartPage() {
   const { items, updateQty, removeItem, total } = useCart();
   const { config } = useRestaurant();
 
+  const isRestaurantOpen = config?.is_open ?? true;
   const packingCharge = config?.packing_charge || 20;
   const grandTotal = total + packingCharge;
 
@@ -30,6 +31,12 @@ export default function CartPage() {
   return (
     <div className="page-container py-5 sm:py-8">
       <h1 className="page-title mb-6 sm:mb-8">Your Cart</h1>
+
+      {!isRestaurantOpen && (
+        <div className="mb-6 p-4 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium">
+          The restaurant is currently closed. You can review your cart but cannot place an order right now.
+        </div>
+      )}
 
       <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
         <div className="flex-1 space-y-3 sm:space-y-4 min-w-0">
@@ -65,11 +72,17 @@ export default function CartPage() {
                   >
                     <Minus className="w-4 h-4" />
                   </button>
-                  <span className="w-8 text-center font-semibold">{item.quantity}</span>
+                  <div className="flex flex-col items-center">
+                    <span className="w-8 text-center font-semibold">{item.quantity}</span>
+                    {item.quantity >= item.current_stock && (
+                      <span className="text-[10px] text-orange-600 font-bold whitespace-nowrap">MAX</span>
+                    )}
+                  </div>
                   <button
                     onClick={() => updateQty(item.food_item_id, item.quantity + 1)}
-                    className="w-9 h-9 sm:w-8 sm:h-8 rounded-full border border-border flex items-center justify-center hover:bg-muted transition-colors"
+                    className="w-9 h-9 sm:w-8 sm:h-8 rounded-full border border-border flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-50"
                     aria-label="Increase quantity"
+                    disabled={item.quantity >= item.current_stock}
                   >
                     <Plus className="w-4 h-4" />
                   </button>
@@ -120,8 +133,8 @@ export default function CartPage() {
                 <span className="text-primary">₹{grandTotal.toFixed(2)}</span>
               </div>
             </div>
-            <Link to="/checkout">
-              <Button className="w-full h-11 mt-6">
+            <Link to={isRestaurantOpen ? "/checkout" : "#"}>
+              <Button className="w-full h-11 mt-6" disabled={!isRestaurantOpen}>
                 Proceed to Checkout <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
             </Link>

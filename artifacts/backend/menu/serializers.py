@@ -98,6 +98,32 @@ class FoodItemSerializer(serializers.ModelSerializer):
         return data
 
 class RestaurantConfigSerializer(serializers.ModelSerializer):
+    is_open = serializers.SerializerMethodField()
+
     class Meta:
         model = RestaurantConfig
         fields = '__all__'
+
+    def get_is_open(self, obj):
+        from django.utils import timezone
+        import datetime
+        
+        now = timezone.localtime()
+        current_day = now.strftime('%a') # Mon, Tue, etc.
+        current_time = now.time()
+        
+        # Default timing
+        opening = obj.opening_time
+        closing = obj.closing_time
+        
+        # Check weekday specific timing
+        if obj.weekday_timing and current_day in obj.weekday_timing:
+            day_timing = obj.weekday_timing[current_day]
+            if 'open' in day_timing and 'close' in day_timing:
+                try:
+                    opening = datetime.datetime.strptime(day_timing['open'], '%H:%M').time()
+                    closing = datetime.datetime.strptime(day_timing['close'], '%H:%M').time()
+                except ValueError:
+                    pass
+        
+        return opening <= current_time <= closing

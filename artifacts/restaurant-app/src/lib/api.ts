@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { toast } from 'react-hot-toast';
 
 const API_URL =
   import.meta.env.VITE_API_URL?.replace(/\/?$/, "/") || "http://localhost:8000/api/";
@@ -24,11 +25,25 @@ api.interceptors.request.use(
 const AUTH_PATHS = ['auth/otp/request/', 'auth/otp/verify/', 'auth/refresh/'];
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    if (response.data && response.data.message) {
+      toast.success(response.data.message);
+    }
+    return response;
+  },
   async (error) => {
     const originalRequest = error.config;
     const requestUrl = originalRequest?.url ?? '';
     const isAuthRequest = AUTH_PATHS.some((path) => requestUrl.includes(path));
+
+    if (error.response?.data && error.response.data.message) {
+      toast.error(error.response.data.message);
+    } else if (error.response?.data && error.response.data.detail) {
+      // Don't show toast for 401 errors that will be retried
+      if (error.response.status !== 401) {
+        toast.error(error.response.data.detail);
+      }
+    }
 
     if (
       error.response?.status === 401 &&

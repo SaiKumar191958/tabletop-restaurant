@@ -1,10 +1,12 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { toast } from "react-hot-toast";
 
 export interface CartItem {
   food_item_id: number;
   name: string;
   price: number;
   quantity: number;
+  current_stock: number;
   image?: string | null;
 }
 
@@ -43,11 +45,24 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setItems((current) => {
       const existing = current.find((i) => i.food_item_id === normalized.food_item_id);
       if (existing) {
+        const newQty = existing.quantity + qty;
+        if (newQty > existing.current_stock) {
+          toast.error(`Only ${existing.current_stock} units available`);
+          return current.map((i) =>
+            i.food_item_id === normalized.food_item_id
+              ? { ...i, quantity: i.current_stock }
+              : i
+          );
+        }
         return current.map((i) =>
           i.food_item_id === normalized.food_item_id
-            ? { ...i, quantity: i.quantity + qty }
+            ? { ...i, quantity: newQty }
             : i
         );
+      }
+      if (qty > normalized.current_stock) {
+        toast.error(`Only ${normalized.current_stock} units available`);
+        return [...current, { ...normalized, quantity: normalized.current_stock }];
       }
       return [...current, normalized];
     });
@@ -63,7 +78,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return;
     }
     setItems((current) =>
-      current.map((i) => (i.food_item_id === id ? { ...i, quantity: qty } : i))
+      current.map((i) => {
+        if (i.food_item_id === id) {
+          if (qty > i.current_stock) {
+            toast.error(`Only ${i.current_stock} units available`);
+            return { ...i, quantity: i.current_stock };
+          }
+          return { ...i, quantity: qty };
+        }
+        return i;
+      })
     );
   };
 
