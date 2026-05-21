@@ -27,6 +27,68 @@ class RestaurantConfigView(APIView):
             return Response(serializer.data)
         return Response(serializer.errors, status=400)
 
+import csv
+import io
+from rest_framework import viewsets, permissions, parsers, status
+# ... (rest of imports)
+
+class BulkMenuItemUploadView(APIView):
+    permission_classes = (IsAdminOrSuperAdmin,)
+    parser_classes = (parsers.MultiPartParser,)
+
+    def post(self, request):
+        file = request.FILES.get('file')
+        if not file:
+            return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if not file.name.endswith('.csv'):
+            return Response({"error": "File must be a CSV"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            decoded_file = file.read().decode('utf-8')
+            io_string = io.StringIO(decoded_file)
+            reader = csv.DictReader(io_string)
+            
+            created_count = 0
+            errors = []
+            
+            for row_idx, row in enumerate(reader, start=2):
+                try:
+                    name = row.get('name')
+                    category_name = row.get('category')
+                    price = row.get('price')
+                    food_type = row.get('food_type', 'veg').lower()
+                    description = row.get('description', '')
+                    stock = row.get('stock', '10')
+                    
+                    if not name or not category_name or not price:
+                        errors.append(f"Row {row_idx}: Missing required fields (name, category, price)")
+                        continue
+                        
+                    category, _ = Category.objects.get_or_create(name=category_name)
+                    
+                    FoodItem.objects.create(
+                        name=name,
+                        category=category,
+                        price=float(price),
+                        food_type=food_type if food_type in ['veg', 'nonveg'] else 'veg',
+                        description=description,
+                        default_stock=int(stock),
+                        current_stock=int(stock),
+                        is_available=True
+                    )
+                    created_count += 1
+                except Exception as e:
+                    errors.append(f"Row {row_idx}: {str(e)}")
+            
+            return Response({
+                "message": f"Successfully uploaded {created_count} items.",
+                "errors": errors if errors else None
+            }, status=status.HTTP_201_CREATED if created_count > 0 else status.HTTP_400_BAD_REQUEST)
+            
+        except Exception as e:
+            return Response({"error": f"Failed to process CSV: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer

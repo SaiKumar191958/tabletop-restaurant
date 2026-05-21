@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   useListMenuItems,
   useListCategories,
@@ -24,8 +24,9 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit2, Trash2, UtensilsCrossed, Link2, Upload, ImageOff, Search, Loader2, Sparkles, FolderTree } from "lucide-react";
+import { Plus, Edit2, Trash2, UtensilsCrossed, Link2, Upload, ImageOff, Search, Loader2, Sparkles, FolderTree, FileDown } from "lucide-react";
 import type { FoodItem, MenuItemInput, Category, CategoryInput } from "@/lib/api-hooks";
+import api from "@/lib/api";
 
 type ImageMode = "none" | "url" | "upload";
 
@@ -78,6 +79,9 @@ export default function AdminMenu() {
   const [foodSearch, setFoodSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(foodSearch.trim()), 400);
     return () => clearTimeout(timer);
@@ -91,6 +95,45 @@ export default function AdminMenu() {
 
   const invalidateItems = () => qc.invalidateQueries({ queryKey: getListMenuItemsQueryKey() });
   const invalidateCats = () => qc.invalidateQueries({ queryKey: getListCategoriesQueryKey() });
+
+  const handleBulkUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.toLowerCase().endsWith(".csv")) {
+      toast({ title: "Upload failed", description: "Please upload a CSV file", variant: "destructive" });
+      return;
+    }
+
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const { data } = await api.post("menu/bulk-upload/", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      toast({ title: "Bulk upload successful", description: data.message });
+      invalidateItems();
+    } catch (err: any) {
+      const errorMsg = err.response?.data?.error || "Bulk upload failed";
+      toast({ title: "Upload failed", description: errorMsg, variant: "destructive" });
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const downloadTemplate = () => {
+    const headers = "name,category,price,food_type,description,stock\n";
+    const sample = "Chicken Biryani,Main Course,250,nonveg,Spicy chicken biryani with raita,50\nVeg Pulao,Main Course,180,veg,Healthy vegetable pulao,30";
+    const blob = new Blob([headers + sample], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "menu_template.csv";
+    a.click();
+  };
 
   // ——— Items Logic ———
   const openCreateItem = () => {
@@ -245,7 +288,31 @@ export default function AdminMenu() {
           <UtensilsCrossed className="w-6 h-6 sm:w-7 sm:h-7 text-primary shrink-0" />
           <h1 className="page-title">Menu Management</h1>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleBulkUpload}
+            accept=".csv"
+            className="hidden"
+          />
+          {activeTab === "items" && (
+            <>
+              <Button variant="outline" size="sm" className="gap-2" onClick={downloadTemplate}>
+                <FileDown className="w-4 h-4" /> Template
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="gap-2" 
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+              >
+                {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                Bulk Upload
+              </Button>
+            </>
+          )}
           {activeTab === "items" ? (
             <Button onClick={openCreateItem} className="flex-1 sm:flex-none">
               <Plus className="mr-2 w-4 h-4" /> Add Item
