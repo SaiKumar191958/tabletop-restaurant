@@ -12,7 +12,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ('id', 'username', 'email', 'role', 'phone', 'profile_image', 'createdAt', 'addresses')
+        fields = ('id', 'username', 'email', 'first_name', 'last_name', 'member_id', 'role', 'phone', 'profile_image', 'createdAt', 'addresses')
 
 class RequestOTPSerializer(serializers.Serializer):
     email = serializers.EmailField()
