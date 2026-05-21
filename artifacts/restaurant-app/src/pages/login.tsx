@@ -5,7 +5,8 @@ import api from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ShoppingBag, Mail, KeyRound, ArrowLeft } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { ShoppingBag, Mail, KeyRound, ArrowLeft, UserCircle, Loader2 } from "lucide-react";
 import { toast } from "react-hot-toast";
 
 type Step = "email" | "otp";
@@ -15,9 +16,10 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
+  const [guestLoading, setGuestLoading] = useState(false);
   const [demoOtp, setDemoOtp] = useState<string | null>(null);
   const [showValidationErrors, setShowValidationErrors] = useState(false);
-  const { login } = useAuth();
+  const { login, guestLogin } = useAuth();
   const navigate = useNavigate();
 
   const redirectByRole = (role: string) => {
@@ -26,7 +28,21 @@ export default function LoginPage() {
     else navigate("/");
   };
 
+  const handleGuestLogin = async () => {
+    setGuestLoading(true);
+    try {
+      await guestLogin();
+      toast.success("Logged in as guest");
+      navigate("/");
+    } catch (error) {
+      toast.error("Guest login failed");
+    } finally {
+      setGuestLoading(false);
+    }
+  };
+
   const handleRequestOtp = async (e: React.FormEvent) => {
+// ...
     e.preventDefault();
     if (!email.trim()) {
       setShowValidationErrors(true);
@@ -97,28 +113,56 @@ export default function LoginPage() {
           </p>
 
           {step === "email" ? (
-            <form onSubmit={handleRequestOtp} className="space-y-5">
-              <div className="space-y-2">
-                <Label htmlFor="email" className={showValidationErrors && !email.trim() ? "text-destructive" : ""}>
-                  Email *
-                </Label>
+            <div className="space-y-6">
+              <div className="space-y-4">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="w-full h-12 border-primary/20 hover:bg-primary/5 hover:text-primary transition-all group"
+                  onClick={handleGuestLogin}
+                  disabled={guestLoading || loading}
+                >
+                  {guestLoading ? (
+                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                  ) : (
+                    <UserCircle className="w-5 h-5 mr-2 text-primary group-hover:scale-110 transition-transform" />
+                  )}
+                  Continue as Guest
+                </Button>
+                
                 <div className="relative">
-                  <Mail className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${showValidationErrors && !email.trim() ? "text-destructive" : "text-muted-foreground"}`} />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className={`pl-9 ${showValidationErrors && !email.trim() ? "border-destructive focus-visible:ring-destructive" : ""}`}
-                    required
-                  />
+                  <div className="absolute inset-0 flex items-center">
+                    <Separator className="w-full" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground font-medium">Or user login</span>
+                  </div>
                 </div>
               </div>
-              <Button type="submit" className="w-full h-11" disabled={loading}>
-                {loading ? "Sending code..." : "Send verification code"}
-              </Button>
-            </form>
+
+              <form onSubmit={handleRequestOtp} className="space-y-5">
+                <div className="space-y-2">
+                  <Label htmlFor="email" className={showValidationErrors && !email.trim() ? "text-destructive" : ""}>
+                    Email *
+                  </Label>
+                  <div className="relative">
+                    <Mail className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${showValidationErrors && !email.trim() ? "text-destructive" : "text-muted-foreground"}`} />
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="you@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className={`pl-9 ${showValidationErrors && !email.trim() ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                      required
+                    />
+                  </div>
+                </div>
+                <Button type="submit" className="w-full h-11" disabled={loading || guestLoading}>
+                  {loading ? "Sending code..." : "Send verification code"}
+                </Button>
+              </form>
+            </div>
           ) : (
             <form onSubmit={handleVerifyOtp} className="space-y-5">
               {demoOtp && (

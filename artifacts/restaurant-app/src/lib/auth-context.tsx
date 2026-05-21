@@ -1,11 +1,12 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import api from "./api";
+import { getDeviceId } from "./utils";
 
 export interface User {
   id: number;
   username: string;
   email: string;
-  role: 'superadmin' | 'admin' | 'user';
+  role: 'superadmin' | 'admin' | 'user' | 'guest';
   phone?: string;
   profile_image?: string;
 }
@@ -14,6 +15,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (access: string, refresh: string) => Promise<void>;
+  guestLogin: () => Promise<void>;
   logout: () => void;
 }
 
@@ -51,6 +53,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await fetchUser();
   };
 
+  const guestLogin = async () => {
+    const deviceId = getDeviceId();
+    try {
+      const response = await api.post('auth/guest-login/', { device_id: deviceId });
+      const { access, refresh } = response.data;
+      localStorage.setItem("access_token", access);
+      localStorage.setItem("refresh_token", refresh);
+      await fetchUser();
+    } catch (error) {
+      console.error("Guest login failed", error);
+      throw error;
+    }
+  };
+
   const logout = () => {
     setUser(null);
     localStorage.removeItem("access_token");
@@ -58,7 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, guestLogin, logout }}>
       {children}
     </AuthContext.Provider>
   );

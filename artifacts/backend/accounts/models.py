@@ -8,9 +8,11 @@ class CustomUser(AbstractUser):
         ('superadmin', 'Super Admin'),
         ('admin', 'Admin'),
         ('user', 'User'),
+        ('guest', 'Guest'),
     ]
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='user')
     phone = models.CharField(max_length=15, blank=True)
+    device_id = models.CharField(max_length=255, blank=True, null=True, unique=True)
     profile_image = models.ImageField(upload_to='profiles/', blank=True)
 
 

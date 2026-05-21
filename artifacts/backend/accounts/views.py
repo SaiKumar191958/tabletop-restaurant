@@ -82,6 +82,36 @@ class VerifyOTPView(APIView):
         })
 
 
+class GuestLoginView(APIView):
+    permission_classes = (permissions.AllowAny,)
+
+    def post(self, request):
+        device_id = request.data.get('device_id')
+        if not device_id:
+            return Response({"error": "device_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Find or create guest user
+        username = f"guest_{device_id[:20]}"
+        user, created = CustomUser.objects.get_or_create(
+            device_id=device_id,
+            defaults={
+                'username': username,
+                'role': 'guest',
+                'is_active': True,
+            }
+        )
+        
+        if created:
+            user.set_unusable_password()
+            user.save()
+
+        tokens = _tokens_for_user(user)
+        return Response({
+            **tokens,
+            'user': UserSerializer(user).data,
+            'message': 'Logged in as guest' if not created else 'Guest account created'
+        })
+
 class UserDetailView(generics.RetrieveAPIView):
     serializer_class = UserSerializer
     permission_classes = (permissions.IsAuthenticated,)

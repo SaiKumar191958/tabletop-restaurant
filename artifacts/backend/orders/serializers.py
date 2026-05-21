@@ -59,7 +59,9 @@ class OrderSerializer(serializers.ModelSerializer):
             
         request_user = self.context['request'].user
         user = request_user if request_user.is_authenticated else None
-        is_guest = not request_user.is_authenticated
+        
+        # A user is a guest if they are not authenticated OR if they have the 'guest' role
+        is_guest = not request_user.is_authenticated or (hasattr(request_user, 'role') and request_user.role == 'guest')
 
         # Get restaurant config for charges and timing
         config = RestaurantConfig.objects.first()
@@ -111,6 +113,10 @@ class OrderSerializer(serializers.ModelSerializer):
         # Calculate GST on subtotal
         gst_amount = (subtotal * gst_percent / Decimal('100')).quantize(Decimal('0.01'))
         total_price = subtotal + packing_charge + gst_amount + delivery_charge
+
+        # If user is a logged-in guest, ensure we use their device_id
+        if is_guest and user and hasattr(user, 'device_id') and user.device_id and not validated_data.get('device_id'):
+            validated_data['device_id'] = user.device_id
 
         order = Order.objects.create(
             user=user,
