@@ -209,7 +209,7 @@ export default function CheckoutPage() {
     }
   };
 
-  if (!user && !authDialogOpen) return null;
+  if (!user && !authDialogOpen && !guestAcknowledgeOpen) return null;
 
   return (
     <div className="page-container py-5 sm:py-8">
