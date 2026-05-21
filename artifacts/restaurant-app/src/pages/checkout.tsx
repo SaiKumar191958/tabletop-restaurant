@@ -406,7 +406,6 @@ export default function CheckoutPage() {
               <GoogleLogin
                 onSuccess={handleGoogleSuccess}
                 onError={() => toast.error("Google Login Failed")}
-                useOneTap
                 theme="outline"
                 width="320px"
               />

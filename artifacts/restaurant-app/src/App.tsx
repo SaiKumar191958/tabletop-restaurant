@@ -29,12 +29,12 @@ const queryClient = new QueryClient({
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <RestaurantProvider>
-          <CartProvider>
-            <TooltipProvider>
-              <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || ""}>
+    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || ""}>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <RestaurantProvider>
+            <CartProvider>
+              <TooltipProvider>
                 <BrowserRouter>
                   <Routes>
                     <Route element={<Layout />}>
@@ -89,13 +89,13 @@ function App() {
                     </Route>
                   </Routes>
                 </BrowserRouter>
-              </GoogleOAuthProvider>
-              <Toaster position="top-center" />
-            </TooltipProvider>
-          </CartProvider>
-        </RestaurantProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+                <Toaster position="top-center" />
+              </TooltipProvider>
+            </CartProvider>
+          </RestaurantProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </GoogleOAuthProvider>
   );
 }
 
