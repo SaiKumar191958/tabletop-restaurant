@@ -25,10 +25,12 @@ from orders.views import (
 from orders.payment_views import PaymentConfigView
 from rest_framework.routers import DefaultRouter
 from menu.views import CategoryViewSet, FoodItemViewSet, ExternalFoodSearchView, RestaurantConfigView, BulkMenuItemUploadView
+from accounts.views import UserAddressViewSet
 
 router = DefaultRouter()
 router.register(r'categories', CategoryViewSet)
 router.register(r'menu', FoodItemViewSet)
+router.register(r'addresses', UserAddressViewSet, basename='user_addresses')
 
 urlpatterns = [
     path('admin/', admin.site.urls),

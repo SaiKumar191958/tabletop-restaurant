@@ -78,6 +78,13 @@ export interface PaymentConfig {
   demo_fail_card?: string;
 }
 
+export interface Address {
+  id: number;
+  address_type: 'home' | 'work' | 'other';
+  address_line: string;
+  is_default: boolean;
+}
+
 export interface User {
   id: number;
   username: string;
@@ -85,6 +92,7 @@ export interface User {
   role: string;
   phone?: string;
   createdAt?: string;
+  addresses?: Address[];
 }
 
 export interface DashboardStats {
@@ -206,6 +214,14 @@ function normalizeUser(raw: Record<string, unknown>): User {
       : raw.date_joined
         ? String(raw.date_joined)
         : undefined,
+    addresses: Array.isArray(raw.addresses)
+      ? (raw.addresses as Record<string, unknown>[]).map((addr) => ({
+          id: Number(addr.id),
+          address_type: addr.address_type as any,
+          address_line: String(addr.address_line),
+          is_default: Boolean(addr.is_default),
+        }))
+      : [],
   };
 }
 
@@ -626,6 +642,92 @@ export function useUpdateUserRole(
     mutationFn: async ({ id, data }) => {
       const { data: res } = await api.patch(`admin/users/${id}/role/`, data);
       return normalizeUser(res);
+    },
+    ...options,
+  });
+}
+
+// ——— Profile & Address Hooks ———
+
+export function useUpdateProfile(
+  options?: UseMutationOptions<User, Error, { data: Partial<User> }>,
+) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ data }) => {
+      const { data: res } = await api.patch("auth/me/", data);
+      return normalizeUser(res);
+    },
+    onSuccess: (updatedUser) => {
+      queryClient.setQueryData(["auth", "me"], updatedUser);
+    },
+    ...options,
+  });
+}
+
+export function useListAddresses(
+  options?: Omit<UseQueryOptions<Address[]>, "queryKey" | "queryFn">,
+) {
+  return useQuery({
+    queryKey: ["addresses"],
+    queryFn: async () => {
+      const { data } = await api.get("addresses/");
+      return (data as Record<string, unknown>[]).map((addr) => ({
+        id: Number(addr.id),
+        address_type: addr.address_type as any,
+        address_line: String(addr.address_line),
+        is_default: Boolean(addr.is_default),
+      }));
+    },
+    ...options,
+  });
+}
+
+export function useCreateAddress(
+  options?: UseMutationOptions<Address, Error, { data: Omit<Address, "id"> }>,
+) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ data }) => {
+      const { data: res } = await api.post("addresses/", data);
+      return res as Address;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["addresses"] });
+      queryClient.invalidateQueries({ queryKey: ["auth", "me"] });
+    },
+    ...options,
+  });
+}
+
+export function useUpdateAddress(
+  options?: UseMutationOptions<Address, Error, { id: number; data: Partial<Address> }>,
+) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, data }) => {
+      const { data: res } = await api.patch(`addresses/${id}/`, data);
+      return res as Address;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["addresses"] });
+      queryClient.invalidateQueries({ queryKey: ["auth", "me"] });
+    },
+    ...options,
+  });
+}
+
+export function useDeleteAddress(
+  options?: UseMutationOptions<void, Error, { id: number }>,
+) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id }) => {
+      await api.delete(`addresses/${id}/`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["addresses"] });
+      queryClient.invalidateQueries({ queryKey: ["auth", "me"] });
     },
     ...options,
   });

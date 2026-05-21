@@ -1,12 +1,18 @@
 from rest_framework import serializers
-from .models import CustomUser
+from .models import CustomUser, UserAddress
+
+class UserAddressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserAddress
+        fields = ('id', 'address_type', 'address_line', 'is_default')
 
 class UserSerializer(serializers.ModelSerializer):
     createdAt = serializers.DateTimeField(source='date_joined', read_only=True)
+    addresses = UserAddressSerializer(many=True, read_only=True)
 
     class Meta:
         model = CustomUser
-        fields = ('id', 'username', 'email', 'role', 'phone', 'profile_image', 'createdAt')
+        fields = ('id', 'username', 'email', 'role', 'phone', 'profile_image', 'createdAt', 'addresses')
 
 class RequestOTPSerializer(serializers.Serializer):
     email = serializers.EmailField()

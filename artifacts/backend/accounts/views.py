@@ -161,12 +161,33 @@ class GuestLoginView(APIView):
             'message': 'Logged in as guest' if not created else 'Guest account created'
         })
 
-class UserDetailView(generics.RetrieveAPIView):
+class UserDetailView(generics.RetrieveUpdateAPIView):
     serializer_class = UserSerializer
     permission_classes = (permissions.IsAuthenticated,)
 
     def get_object(self):
         return self.request.user
+
+class UserAddressViewSet(viewsets.ModelViewSet):
+    serializer_class = UserAddressSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_queryset(self):
+        return UserAddress.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        # If this is the first address, make it default
+        is_default = not UserAddress.objects.filter(user=self.request.user).exists()
+        if serializer.validated_data.get('is_default'):
+            # Clear other defaults
+            UserAddress.objects.filter(user=self.request.user).update(is_default=False)
+            is_default = True
+        serializer.save(user=self.request.user, is_default=is_default)
+
+    def perform_update(self, serializer):
+        if serializer.validated_data.get('is_default'):
+            UserAddress.objects.filter(user=self.request.user).exclude(pk=self.kwargs['pk']).update(is_default=False)
+        serializer.save()
 
 class AdminUserListView(generics.ListAPIView):
     queryset = CustomUser.objects.all()

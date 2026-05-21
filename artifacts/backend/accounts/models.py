@@ -15,6 +15,21 @@ class CustomUser(AbstractUser):
     device_id = models.CharField(max_length=255, blank=True, null=True, unique=True)
     profile_image = models.ImageField(upload_to='profiles/', blank=True)
 
+class UserAddress(models.Model):
+    ADDRESS_TYPES = [
+        ('home', 'Home'),
+        ('work', 'Work'),
+        ('other', 'Other'),
+    ]
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='addresses')
+    address_type = models.CharField(max_length=20, choices=ADDRESS_TYPES, default='home')
+    address_line = models.TextField()
+    is_default = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.get_address_type_display()}"
+
 
 class EmailOTP(models.Model):
     PURPOSE_CHOICES = [
