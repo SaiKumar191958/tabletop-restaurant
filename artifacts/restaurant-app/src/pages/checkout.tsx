@@ -227,8 +227,9 @@ export default function CheckoutPage() {
                   type="tel"
                   placeholder="Enter 10-digit mobile number"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
                   className="h-11"
+                  maxLength={10}
                   required
                 />
               </div>

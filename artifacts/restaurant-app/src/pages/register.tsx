@@ -149,9 +149,10 @@ export default function RegisterPage() {
                   id="phone"
                   name="phone"
                   type="tel"
-                  placeholder="+1 555 0000"
+                  placeholder="10-digit mobile number"
                   value={form.phone}
-                  onChange={handleChange}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/\D/g, "").slice(0, 10) })}
+                  maxLength={10}
                 />
               </div>
               <Button type="submit" className="w-full h-11 mt-2" disabled={loading}>
