@@ -3,6 +3,7 @@ import { useSearch } from "wouter";
 import { useNavigate } from "react-router-dom";
 import { useListMenuItems, useListCategories } from "@/lib/api-hooks";
 import { useCart } from "@/lib/cart-context";
+import { useRestaurant } from "@/lib/restaurant-context";
 import { toast } from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
