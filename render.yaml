@@ -50,3 +50,5 @@ services:
         value: https://tabletop-restaurant.vercel.app
       - key: OTP_SHOW_IN_API
         value: "false"
+      - key: TIME_ZONE
+        value: "Asia/Kolkata"
