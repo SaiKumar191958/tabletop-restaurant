@@ -72,15 +72,17 @@ export default function CartPage() {
                   >
                     <Minus className="w-4 h-4" />
                   </button>
-                  <div className="flex flex-col items-center">
-                    <span className="w-8 text-center font-semibold">{item.quantity}</span>
-                    {item.quantity >= item.current_stock && (
-                      <span className="text-[10px] text-orange-600 font-bold whitespace-nowrap">MAX</span>
+                  <div className="flex flex-col items-center min-w-[32px]">
+                    <span className="font-semibold">{item.quantity}</span>
+                    {item.quantity >= item.current_stock ? (
+                      <span className="text-[10px] text-orange-600 font-bold whitespace-nowrap leading-none mt-0.5">MAX</span>
+                    ) : (
+                      <span className="text-[9px] text-muted-foreground whitespace-nowrap leading-none mt-0.5">{item.current_stock} left</span>
                     )}
                   </div>
                   <button
                     onClick={() => updateQty(item.food_item_id, item.quantity + 1)}
-                    className="w-9 h-9 sm:w-8 sm:h-8 rounded-full border border-border flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-50"
+                    className="w-9 h-9 sm:w-8 sm:h-8 rounded-full border border-border flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-30"
                     aria-label="Increase quantity"
                     disabled={item.quantity >= item.current_stock}
                   >

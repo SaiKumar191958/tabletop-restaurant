@@ -46,17 +46,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const existing = current.find((i) => i.food_item_id === normalized.food_item_id);
       if (existing) {
         const newQty = existing.quantity + qty;
-        if (newQty > existing.current_stock) {
-          toast.error(`Only ${existing.current_stock} units available`);
+        // Use the fresh stock from the 'normalized' item passed from the menu
+        if (newQty > normalized.current_stock) {
+          toast.error(`Only ${normalized.current_stock} units available`);
           return current.map((i) =>
             i.food_item_id === normalized.food_item_id
-              ? { ...i, quantity: i.current_stock }
+              ? { ...i, quantity: normalized.current_stock, current_stock: normalized.current_stock }
               : i
           );
         }
         return current.map((i) =>
           i.food_item_id === normalized.food_item_id
-            ? { ...i, quantity: newQty }
+            ? { ...i, quantity: newQty, current_stock: normalized.current_stock }
             : i
         );
       }
