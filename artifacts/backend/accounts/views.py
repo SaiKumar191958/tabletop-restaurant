@@ -4,8 +4,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import CustomUser
-from .serializers import UserSerializer, RequestOTPSerializer, VerifyOTPSerializer
+from .models import CustomUser, UserAddress
+from .serializers import UserSerializer, RequestOTPSerializer, VerifyOTPSerializer, UserAddressSerializer
 from .permissions import IsSuperAdmin
 from . import otp_service
 
