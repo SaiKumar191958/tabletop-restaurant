@@ -82,6 +82,55 @@ class VerifyOTPView(APIView):
         })
 
 
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
+
+class GoogleLoginView(APIView):
+    permission_classes = (permissions.AllowAny,)
+
+    def post(self, request):
+        token = request.data.get('id_token')
+        client_id = getattr(settings, "GOOGLE_CLIENT_ID", None)
+        
+        if not token:
+            return Response({"error": "id_token is required"}, status=400)
+        if not client_id:
+            return Response({"error": "Google Client ID not configured on server"}, status=500)
+
+        try:
+            # Verify the token with Google
+            idinfo = id_token.verify_oauth2_token(token, google_requests.Request(), client_id)
+
+            if idinfo['iss'] not in ['accounts.google.com', 'https://accounts.google.com']:
+                raise ValueError('Wrong issuer.')
+
+            email = idinfo['email']
+            username = email.split('@')[0]
+            first_name = idinfo.get('given_name', '')
+            last_name = idinfo.get('family_name', '')
+
+            # Find or create user
+            user, created = CustomUser.objects.get_or_create(
+                email=email,
+                defaults={
+                    'username': f"{username}_{idinfo['sub'][:5]}",
+                    'first_name': first_name,
+                    'last_name': last_name,
+                }
+            )
+
+            tokens = _tokens_for_user(user)
+            return Response({
+                **tokens,
+                'user': UserSerializer(user).data,
+                'message': 'Signed in with Google'
+            })
+
+        except ValueError as e:
+            return Response({"error": f"Invalid token: {str(e)}"}, status=400)
+        except Exception as e:
+            return Response({"error": f"Authentication failed: {str(e)}"}, status=500)
+
 class GuestLoginView(APIView):
     permission_classes = (permissions.AllowAny,)
 

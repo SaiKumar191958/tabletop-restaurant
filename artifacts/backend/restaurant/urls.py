@@ -10,6 +10,7 @@ from accounts.views import (
     RequestOTPView,
     VerifyOTPView,
     GuestLoginView,
+    GoogleLoginView,
     UserDetailView,
     AdminUserListView,
     AdminUserRoleUpdateView,
@@ -42,6 +43,7 @@ urlpatterns = [
     path('api/auth/otp/request/', RequestOTPView.as_view(), name='otp_request'),
     path('api/auth/otp/verify/', VerifyOTPView.as_view(), name='otp_verify'),
     path('api/auth/guest-login/', GuestLoginView.as_view(), name='guest_login'),
+    path('api/auth/google-login/', GoogleLoginView.as_view(), name='google_login'),
     path('api/auth/refresh/', TokenRefreshView.as_view(permission_classes=[AllowAny]), name='token_refresh'),
     path('api/auth/me/', UserDetailView.as_view(), name='user_detail'),
     

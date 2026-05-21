@@ -333,3 +333,5 @@ OTP_SHOW_IN_API = _env("OTP_SHOW_IN_API", "false").lower() in ("1", "true", "yes
 OTP_LENGTH = 6
 OTP_EXPIRY_MINUTES = 10
 OTP_RESEND_SECONDS = 60
+
+GOOGLE_CLIENT_ID = _env("GOOGLE_CLIENT_ID", "")

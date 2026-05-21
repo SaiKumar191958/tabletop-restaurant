@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth-context";
 import api from "@/lib/api";
+import { GoogleLogin } from "@react-oauth/google";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -38,6 +39,22 @@ export default function LoginPage() {
       toast.error("Guest login failed");
     } finally {
       setGuestLoading(false);
+    }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    setLoading(true);
+    try {
+      const { data } = await api.post("auth/google-login/", {
+        id_token: credentialResponse.credential,
+      });
+      await login(data.access, data.refresh);
+      toast.success("Signed in with Google");
+      redirectByRole(data.user?.role ?? "user");
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || "Google sign-in failed");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -129,13 +146,23 @@ export default function LoginPage() {
                   )}
                   Continue as Guest
                 </Button>
+
+                <div className="flex justify-center">
+                  <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={() => toast.error("Google Login Failed")}
+                    useOneTap
+                    theme="outline"
+                    width="100%"
+                  />
+                </div>
                 
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
                     <Separator className="w-full" />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background px-2 text-muted-foreground font-medium">Or user login</span>
+                    <span className="bg-background px-2 text-muted-foreground font-medium">Or email OTP</span>
                   </div>
                 </div>
               </div>

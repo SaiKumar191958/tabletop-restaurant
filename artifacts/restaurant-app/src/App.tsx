@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "react-hot-toast";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/lib/auth-context";
 import { CartProvider } from "@/lib/cart-context";
@@ -33,60 +34,62 @@ function App() {
         <RestaurantProvider>
           <CartProvider>
             <TooltipProvider>
-              <BrowserRouter>
-                <Routes>
-                  <Route element={<Layout />}>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/login" element={<LoginPage />} />
-                    <Route path="/register" element={<RegisterPage />} />
-                    <Route path="/menu" element={<MenuPage />} />
-                    <Route path="/cart" element={<CartPage />} />
-                    <Route path="/checkout" element={<CheckoutPage />} />
-                    <Route path="/orders" element={<OrdersPage />} />
-                    <Route
-                      path="/admin/dashboard"
-                      element={
-                        <ProtectedRoute allowedRoles={["admin", "superadmin"]}>
-                          <AdminDashboard />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/admin/menu"
-                      element={
-                        <ProtectedRoute allowedRoles={["admin", "superadmin"]}>
-                          <AdminMenu />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/admin/orders"
-                      element={
-                        <ProtectedRoute allowedRoles={["admin", "superadmin"]}>
-                          <AdminOrders />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/admin/settings"
-                      element={
-                        <ProtectedRoute allowedRoles={["admin", "superadmin"]}>
-                          <AdminSettings />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/superadmin/users"
-                      element={
-                        <ProtectedRoute allowedRoles={["superadmin"]}>
-                          <SuperAdminUsers />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route path="*" element={<NotFound />} />
-                  </Route>
-                </Routes>
-              </BrowserRouter>
+              <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || ""}>
+                <BrowserRouter>
+                  <Routes>
+                    <Route element={<Layout />}>
+                      <Route path="/" element={<Home />} />
+                      <Route path="/login" element={<LoginPage />} />
+                      <Route path="/register" element={<RegisterPage />} />
+                      <Route path="/menu" element={<MenuPage />} />
+                      <Route path="/cart" element={<CartPage />} />
+                      <Route path="/checkout" element={<CheckoutPage />} />
+                      <Route path="/orders" element={<OrdersPage />} />
+                      <Route
+                        path="/admin/dashboard"
+                        element={
+                          <ProtectedRoute allowedRoles={["admin", "superadmin"]}>
+                            <AdminDashboard />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/admin/menu"
+                        element={
+                          <ProtectedRoute allowedRoles={["admin", "superadmin"]}>
+                            <AdminMenu />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/admin/orders"
+                        element={
+                          <ProtectedRoute allowedRoles={["admin", "superadmin"]}>
+                            <AdminOrders />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/admin/settings"
+                        element={
+                          <ProtectedRoute allowedRoles={["admin", "superadmin"]}>
+                            <AdminSettings />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/superadmin/users"
+                        element={
+                          <ProtectedRoute allowedRoles={["superadmin"]}>
+                            <SuperAdminUsers />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route path="*" element={<NotFound />} />
+                    </Route>
+                  </Routes>
+                </BrowserRouter>
+              </GoogleOAuthProvider>
               <Toaster position="top-center" />
             </TooltipProvider>
           </CartProvider>
