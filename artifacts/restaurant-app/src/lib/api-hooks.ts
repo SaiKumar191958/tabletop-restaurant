@@ -44,6 +44,9 @@ export interface RestaurantConfig {
   delivery_charge_info: string;
   bulk_order_info: string;
   is_open: boolean;
+  opening_time?: string;
+  closing_time?: string;
+  weekday_timing?: Record<string, { open: string; close: string }>;
 }
 
 export interface Order {
@@ -214,6 +217,9 @@ function normalizeRestaurantConfig(raw: Record<string, unknown>): RestaurantConf
     delivery_charge_info: String(raw.delivery_charge_info ?? ""),
     bulk_order_info: String(raw.bulk_order_info ?? ""),
     is_open: Boolean(raw.is_open ?? true),
+    opening_time: raw.opening_time ? String(raw.opening_time) : undefined,
+    closing_time: raw.closing_time ? String(raw.closing_time) : undefined,
+    weekday_timing: raw.weekday_timing as Record<string, { open: string; close: string }> | undefined,
   };
 }
 
