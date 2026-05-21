@@ -45,7 +45,8 @@ import {
   MoreHorizontal,
   Plus,
   Edit2,
-  UserCircle
+  UserCircle,
+  ShoppingBag
 } from "lucide-react";
 
 export default function CheckoutPage() {
