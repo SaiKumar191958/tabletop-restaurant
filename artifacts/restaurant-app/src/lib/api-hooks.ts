@@ -252,6 +252,22 @@ export function useRestaurantConfig(
   });
 }
 
+export function useUpdateRestaurantConfig(
+  options?: UseMutationOptions<RestaurantConfig, Error, { data: Partial<RestaurantConfig> }>,
+) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ data }) => {
+      const { data: res } = await api.patch("restaurant/config/", data);
+      return normalizeRestaurantConfig(res);
+    },
+    onSuccess: (newConfig) => {
+      queryClient.setQueryData(getRestaurantConfigQueryKey(), newConfig);
+    },
+    ...options,
+  });
+}
+
 export function usePaymentConfig(
   options?: Omit<UseQueryOptions<PaymentConfig>, "queryKey" | "queryFn">,
 ) {

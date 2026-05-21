@@ -119,6 +119,9 @@ function Navbar() {
                       <DropdownMenuItem asChild>
                         <Link to="/admin/orders" className="cursor-pointer w-full">Manage Orders</Link>
                       </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin/settings" className="cursor-pointer w-full">Restaurant Settings</Link>
+                      </DropdownMenuItem>
                     </>
                   )}
                   <DropdownMenuItem asChild>
@@ -190,6 +193,7 @@ function Navbar() {
                     <Link to="/admin/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-muted-foreground">Admin Dashboard</Link>
                     <Link to="/admin/menu" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-muted-foreground">Manage Menu</Link>
                     <Link to="/admin/orders" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-muted-foreground">Manage Orders</Link>
+                    <Link to="/admin/settings" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-muted-foreground">Restaurant Settings</Link>
                   </>
                 )}
                 <Link to="/orders" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-muted-foreground">My Orders</Link>

@@ -18,6 +18,7 @@ import RegisterPage from "@/pages/register";
 import AdminDashboard from "@/pages/admin/dashboard";
 import AdminMenu from "@/pages/admin/menu";
 import AdminOrders from "@/pages/admin/orders";
+import AdminSettings from "@/pages/admin/settings";
 import SuperAdminUsers from "@/pages/superadmin/users";
 import NotFound from "@/pages/not-found";
 
@@ -63,6 +64,14 @@ function App() {
                       element={
                         <ProtectedRoute allowedRoles={["admin", "superadmin"]}>
                           <AdminOrders />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/admin/settings"
+                      element={
+                        <ProtectedRoute allowedRoles={["admin", "superadmin"]}>
+                          <AdminSettings />
                         </ProtectedRoute>
                       }
                     />
