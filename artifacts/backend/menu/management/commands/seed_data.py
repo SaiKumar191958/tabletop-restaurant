@@ -7,14 +7,20 @@ class Command(BaseCommand):
     help = 'Seed data for Sri Durga Military Hotel'
 
     def handle(self, *args, **options):
-        # 1. Update/Create Restaurant Config
-        config, created = RestaurantConfig.objects.get_or_create(id=1)
-        config.name = "Sri Durga Military Hotel"
-        config.packing_charge = 20.00
-        config.delivery_charge_info = "Delivery charges depend on distance"
-        config.bulk_order_info = "Bulk order available (6hrs advance booking)"
-        config.save()
-        self.stdout.write(self.style.SUCCESS('Successfully updated restaurant config'))
+        # 1. Create Restaurant Config only if it doesn't exist
+        config, created = RestaurantConfig.objects.get_or_create(
+            id=1,
+            defaults={
+                "name": "Sri Durga Military Hotel",
+                "packing_charge": 20.00,
+                "delivery_charge_info": "Delivery charges depend on distance",
+                "bulk_order_info": "Bulk order available (6hrs advance booking)",
+            }
+        )
+        if created:
+            self.stdout.write(self.style.SUCCESS('Successfully created default restaurant config'))
+        else:
+            self.stdout.write(self.style.WARNING('Restaurant config already exists, skipping defaults'))
 
         # 2. Create Categories
         categories = {

@@ -10,9 +10,7 @@ class RestaurantConfigView(APIView):
     permission_classes = (permissions.AllowAny,)
 
     def get(self, request):
-        config = RestaurantConfig.objects.first()
-        if not config:
-            config = RestaurantConfig.objects.create()
+        config, _ = RestaurantConfig.objects.get_or_create(id=1)
         serializer = RestaurantConfigSerializer(config)
         return Response(serializer.data)
 
@@ -21,9 +19,7 @@ class RestaurantConfigView(APIView):
         if not request.user.is_authenticated or not (request.user.role in ['admin', 'superadmin']):
             return Response({"error": "Unauthorized"}, status=403)
         
-        config = RestaurantConfig.objects.first()
-        if not config:
-            config = RestaurantConfig.objects.create()
+        config, _ = RestaurantConfig.objects.get_or_create(id=1)
         
         serializer = RestaurantConfigSerializer(config, data=request.data, partial=True)
         if serializer.is_valid():
