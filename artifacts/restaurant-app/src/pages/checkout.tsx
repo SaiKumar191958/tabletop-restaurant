@@ -58,7 +58,6 @@ export default function CheckoutPage() {
 
   // Dialog states
   const [authDialogOpen, setAuthOpen] = useState(false);
-  const [guestAcknowledgeOpen, setGuestOpen] = useState(false);
   const [addressDialogOpen, setAddressOpen] = useState(false);
 
   // Form states
@@ -110,14 +109,9 @@ export default function CheckoutPage() {
   };
 
   const handleContinueAsGuest = async () => {
-    setAuthOpen(false);
-    setGuestOpen(true);
-  };
-
-  const confirmGuestAccess = async () => {
     try {
       await guestLogin();
-      setGuestOpen(false);
+      setAuthOpen(false);
       setIsPickupOnly(true);
       toast.success("Guest access enabled (Pickup only)");
     } catch (error) {
@@ -209,7 +203,7 @@ export default function CheckoutPage() {
     }
   };
 
-  if (!user && !authDialogOpen && !guestAcknowledgeOpen) return null;
+  if (!user && !authDialogOpen) return null;
 
   return (
     <div className="page-container py-5 sm:py-8">
@@ -401,7 +395,7 @@ export default function CheckoutPage() {
             <DialogDescription>Choose how you'd like to proceed with your order</DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4 py-4">
+          <div className="space-y-6 py-4">
             <div className="flex justify-center">
               <GoogleLogin
                 onSuccess={handleGoogleSuccess}
@@ -416,14 +410,27 @@ export default function CheckoutPage() {
               <div className="relative flex justify-center text-xs uppercase"><span className="bg-background px-2 text-muted-foreground">Or</span></div>
             </div>
 
-            <Button 
-              variant="outline" 
-              className="w-full h-12 gap-2 border-primary/20 hover:bg-primary/5"
-              onClick={handleContinueAsGuest}
-            >
-              <UserCircle className="w-5 h-5 text-primary" />
-              Continue as Guest
-            </Button>
+            <div className="space-y-4">
+              <Button 
+                variant="outline" 
+                className="w-full h-12 gap-2 border-primary/20 hover:bg-primary/5"
+                onClick={handleContinueAsGuest}
+              >
+                <UserCircle className="w-5 h-5 text-primary" />
+                Continue as Guest
+              </Button>
+
+              <div className="bg-orange-50 p-4 rounded-xl border border-orange-100 flex items-start gap-3">
+                <Info className="w-5 h-5 text-orange-600 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="text-[13px] font-semibold text-orange-900">Guest Order Policy</p>
+                  <p className="text-[12px] text-orange-800 leading-relaxed">
+                    Guest users are restricted to <span className="font-bold">restaurant pickup only</span>. 
+                    Sign in with Google if you require delivery to your home or office.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
