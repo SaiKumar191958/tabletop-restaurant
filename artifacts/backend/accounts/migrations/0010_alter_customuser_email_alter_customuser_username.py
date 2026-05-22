@@ -3,6 +3,20 @@
 import accounts.models
 from django.db import migrations, models
 
+def deduplicate_emails(apps, schema_editor):
+    CustomUser = apps.get_model('accounts', 'CustomUser')
+    # Find emails that appear more than once
+    duplicate_emails = CustomUser.objects.values('email').annotate(email_count=models.Count('id')).filter(email_count__gt=1)
+    
+    for entry in duplicate_emails:
+        email = entry['email']
+        if not email:
+            continue
+        # Keep the most recently logged in user, or the oldest account if never logged in
+        users = list(CustomUser.objects.filter(email=email).order_by('-last_login', '-date_joined'))
+        # Keep the first one, delete the rest
+        for user in users[1:]:
+            user.delete()
 
 class Migration(migrations.Migration):
 
@@ -11,6 +25,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RunPython(deduplicate_emails, reverse_code=migrations.RunPython.noop),
         migrations.AlterField(
             model_name='customuser',
             name='email',
