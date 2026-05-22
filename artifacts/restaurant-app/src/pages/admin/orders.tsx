@@ -46,7 +46,8 @@ export default function AdminOrders() {
   const orders = orderResponse?.results;
   const updateStatusMutation = useUpdateOrderStatus();
   const updateOrderMutation = useUpdateOrder();
-  const { data: menuItems } = useListMenuItems();
+  const { data: itemResponse } = useListMenuItems();
+  const menuItems = itemResponse?.results;
   const { toast } = useToast();
 
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);

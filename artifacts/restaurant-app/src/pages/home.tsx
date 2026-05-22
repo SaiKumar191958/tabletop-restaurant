@@ -13,9 +13,10 @@ import type { FoodItem } from "@/lib/api-hooks";
 
 export default function Home() {
   const { data: categories, isLoading: catLoading } = useListCategories();
-  const { data: items, isLoading: featLoading } = useListMenuItems();
+  const { data: itemResponse, isLoading: featLoading } = useListMenuItems();
   
-  const featured = items?.slice(0, 8) || [];
+  const items = itemResponse?.results || [];
+  const featured = items.slice(0, 8);
   
   const { addItem, items: cartItems } = useCart();
   const { config } = useRestaurant();

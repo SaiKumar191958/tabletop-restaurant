@@ -743,7 +743,8 @@ export function useListAddresses(
     queryKey: ["addresses"],
     queryFn: async () => {
       const { data } = await api.get("addresses/");
-      return (data as Record<string, unknown>[]).map((addr) => ({
+      const list = Array.isArray(data) ? data : data.results ?? [];
+      return (list as Record<string, unknown>[]).map((addr) => ({
         id: Number(addr.id),
         address_type: addr.address_type as any,
         address_line: String(addr.address_line),
