@@ -31,10 +31,10 @@ export default function AdminDashboard() {
   }
 
   const statCards = [
-    { label: "Total Orders", value: stats?.total_orders ?? 0, icon: ShoppingBag, color: "text-blue-600", bg: "bg-blue-50" },
-    { label: "Total Revenue", value: `₹${(stats?.total_revenue ?? 0).toFixed(2)}`, icon: Banknote, color: "text-green-600", bg: "bg-green-50" },
-    { label: "Total Users", value: stats?.total_users ?? 0, icon: Users, color: "text-purple-600", bg: "bg-purple-50" },
-    { label: "Menu Items", value: stats?.total_menu_items ?? 0, icon: UtensilsCrossed, color: "text-orange-600", bg: "bg-orange-50" },
+    { label: "Total Orders", value: stats?.total_orders ?? 0, icon: ShoppingBag, color: "text-blue-600", bg: "bg-blue-50", link: "/admin/orders" },
+    { label: "Total Revenue", value: `₹${(stats?.total_revenue ?? 0).toFixed(2)}`, icon: Banknote, color: "text-green-600", bg: "bg-green-50", link: "/admin/orders" },
+    { label: "Total Users", value: stats?.total_users ?? 0, icon: Users, color: "text-purple-600", bg: "bg-purple-50", link: "/superadmin/users" },
+    { label: "Menu Items", value: stats?.total_menu_items ?? 0, icon: UtensilsCrossed, color: "text-orange-600", bg: "bg-orange-50", link: "/admin/menu" },
   ];
 
   const maxCount = Math.max(...(stats?.orders_by_status?.map((s) => s.count) ?? [1]), 1);
@@ -59,13 +59,17 @@ export default function AdminDashboard() {
         {statCards.map((card) => {
           const Icon = card.icon;
           return (
-            <div key={card.label} className="bg-card border border-card-border rounded-2xl p-4 sm:p-6">
-              <div className={`w-12 h-12 ${card.bg} rounded-xl flex items-center justify-center mb-4`}>
+            <Link 
+              key={card.label} 
+              to={card.link}
+              className="bg-card border border-card-border rounded-2xl p-4 sm:p-6 hover:shadow-md transition-shadow cursor-pointer group"
+            >
+              <div className={`w-12 h-12 ${card.bg} rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
                 <Icon className={`w-6 h-6 ${card.color}`} />
               </div>
               <p className="text-muted-foreground text-sm">{card.label}</p>
               <p className="text-lg sm:text-2xl font-bold text-foreground mt-1">{card.value}</p>
-            </div>
+            </Link>
           );
         })}
       </div>
