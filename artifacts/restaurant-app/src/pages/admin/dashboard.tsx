@@ -199,7 +199,7 @@ export default function AdminDashboard() {
                   </div>
                   <div className="flex items-center gap-6">
                     <div className="text-right hidden sm:block">
-                      <p className="text-sm font-bold text-primary">₹{report.total_revenue.toFixed(2)}</p>
+                      <p className="text-sm font-bold text-primary">₹{Number(report.total_revenue).toFixed(2)}</p>
                       <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Revenue</p>
                     </div>
                     {expandedReport === report.id ? <ChevronUp className="w-5 h-5 text-muted-foreground" /> : <ChevronDown className="w-5 h-5 text-muted-foreground" />}
@@ -224,7 +224,7 @@ export default function AdminDashboard() {
                               <td className="px-6 py-4 font-medium">{item.food_item_name}</td>
                               <td className="px-6 py-3 text-center">{item.quantity_sold}</td>
                               <td className="px-6 py-3 text-center text-muted-foreground">{item.quantity_left}</td>
-                              <td className="px-6 py-3 text-right font-bold">₹{item.revenue.toFixed(2)}</td>
+                              <td className="px-6 py-3 text-right font-bold">₹{Number(item.revenue).toFixed(2)}</td>
                             </tr>
                           ))}
                         </tbody>

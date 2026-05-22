@@ -500,7 +500,15 @@ export function useListDailyReports(
     queryKey: getDailyReportsQueryKey(),
     queryFn: async () => {
       const { data } = await api.get("admin/reports/");
-      return Array.isArray(data) ? data : data.results ?? [];
+      const list = Array.isArray(data) ? data : data.results ?? [];
+      return list.map((report: any) => ({
+        ...report,
+        total_revenue: Number(report.total_revenue),
+        item_reports: (report.item_reports ?? []).map((item: any) => ({
+          ...item,
+          revenue: Number(item.revenue)
+        }))
+      }));
     },
     ...options,
   });
