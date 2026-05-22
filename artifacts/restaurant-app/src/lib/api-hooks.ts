@@ -267,6 +267,8 @@ export const getListUsersQueryKey = () => ["admin", "users"] as const;
 
 export const getDashboardStatsQueryKey = () => ["admin", "dashboard"] as const;
 
+export const getDailyReportsQueryKey = () => ["admin", "reports"] as const;
+
 export const getPaymentConfigQueryKey = () => ["payments", "config"] as const;
 
 export const getRestaurantConfigQueryKey = () => ["restaurant", "config"] as const;
@@ -491,7 +493,52 @@ export function useGetDashboardStats(
   });
 }
 
+export function useListDailyReports(
+  options?: Omit<UseQueryOptions<any[]>, "queryKey" | "queryFn">,
+) {
+  return useQuery({
+    queryKey: getDailyReportsQueryKey(),
+    queryFn: async () => {
+      const { data } = await api.get("admin/reports/");
+      return Array.isArray(data) ? data : data.results ?? [];
+    },
+    ...options,
+  });
+}
+
 // ——— Mutations ———
+
+export function useEndDay(
+  options?: UseMutationOptions<any, Error, { date?: string }>,
+) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (vars) => {
+      const { data } = await api.post("admin/end-day/", vars);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: getDailyReportsQueryKey() });
+    },
+    ...options,
+  });
+}
+
+export function useStartDay(
+  options?: UseMutationOptions<any, Error, void>,
+) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const { data } = await api.post("admin/start-day/");
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["menu"] });
+    },
+    ...options,
+  });
+}
 
 export type CategoryInput = {
   name: string;

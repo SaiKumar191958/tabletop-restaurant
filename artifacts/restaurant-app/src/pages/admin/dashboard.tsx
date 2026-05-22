@@ -1,8 +1,10 @@
-import { useGetDashboardStats } from "@/lib/api-hooks";
+import { useGetDashboardStats, useListDailyReports, useEndDay, useStartDay } from "@/lib/api-hooks";
 import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { ShoppingBag, Banknote, Users, UtensilsCrossed, TrendingUp, Settings } from "lucide-react";
+import { ShoppingBag, Banknote, Users, UtensilsCrossed, TrendingUp, Settings, FileText, RotateCcw, List, ChevronDown, ChevronUp } from "lucide-react";
+import { useState } from "react";
+import { toast } from "react-hot-toast";
 
 const STATUS_COLORS: Record<string, string> = {
   pending:   "bg-yellow-500",
@@ -14,6 +16,27 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function AdminDashboard() {
   const { data: stats, isLoading } = useGetDashboardStats();
+  const { data: reports, isLoading: reportsLoading } = useListDailyReports();
+  const endDayMutation = useEndDay();
+  const startDayMutation = useStartDay();
+
+  const [expandedReport, setExpandedReport] = useState<number | null>(null);
+
+  const handleEndDay = () => {
+    if (!confirm("Generate daily report for today? This will summarize all sales and remaining stock.")) return;
+    endDayMutation.mutate({}, {
+      onSuccess: () => toast.success("Daily report generated!"),
+      onError: () => toast.error("Failed to generate report")
+    });
+  };
+
+  const handleStartDay = () => {
+    if (!confirm("Reset all items current stock to their default values for a new day?")) return;
+    startDayMutation.mutate(undefined, {
+      onSuccess: () => toast.success("Stock reset for all items!"),
+      onError: () => toast.error("Failed to reset stock")
+    });
+  };
 
   if (isLoading) {
     return (
@@ -46,12 +69,32 @@ export default function AdminDashboard() {
           <TrendingUp className="w-6 h-6 sm:w-7 sm:h-7 text-primary shrink-0" />
           <h1 className="page-title">Dashboard</h1>
         </div>
-        <Link to="/admin/settings">
-          <Button className="gap-2">
-            <Settings className="w-4 h-4" />
-            Restaurant Settings
+        <div className="flex flex-wrap gap-2">
+          <Button 
+            variant="outline" 
+            className="gap-2 text-orange-600 border-orange-200 hover:bg-orange-50"
+            onClick={handleStartDay}
+            disabled={startDayMutation.isPending}
+          >
+            <RotateCcw className="w-4 h-4" />
+            {startDayMutation.isPending ? "Resetting..." : "Start Day (Reset Stock)"}
           </Button>
-        </Link>
+          <Button 
+            variant="outline" 
+            className="gap-2 text-green-600 border-green-200 hover:bg-green-50"
+            onClick={handleEndDay}
+            disabled={endDayMutation.isPending}
+          >
+            <FileText className="w-4 h-4" />
+            {endDayMutation.isPending ? "Generating..." : "End Day (Daily Report)"}
+          </Button>
+          <Link to="/admin/settings">
+            <Button className="gap-2">
+              <Settings className="w-4 h-4" />
+              Restaurant Settings
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Stat cards */}
@@ -120,6 +163,79 @@ export default function AdminDashboard() {
             )}
           </div>
         </div>
+      </div>
+
+      {/* Daily Reports Section */}
+      <div className="mt-8">
+        <div className="flex items-center gap-2 mb-6">
+          <List className="w-5 h-5 text-primary" />
+          <h2 className="text-xl font-bold">Daily Performance Reports</h2>
+        </div>
+
+        {reportsLoading ? (
+          <div className="space-y-3">
+            {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-16 rounded-xl" />)}
+          </div>
+        ) : !reports || reports.length === 0 ? (
+          <p className="text-muted-foreground text-center py-12 bg-card border border-dashed rounded-2xl">
+            No daily reports generated yet. Click "End Day" to create your first report.
+          </p>
+        ) : (
+          <div className="space-y-4">
+            {reports.map((report: any) => (
+              <div key={report.id} className="bg-card border border-card-border rounded-2xl overflow-hidden">
+                <div 
+                  className="p-4 sm:p-6 flex items-center justify-between cursor-pointer hover:bg-muted/30 transition-colors"
+                  onClick={() => setExpandedReport(expandedReport === report.id ? null : report.id)}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                      <FileText className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-bold">{new Date(report.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                      <p className="text-xs text-muted-foreground">{report.total_orders} orders • {report.total_users_active} active users</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-6">
+                    <div className="text-right hidden sm:block">
+                      <p className="text-sm font-bold text-primary">₹{report.total_revenue.toFixed(2)}</p>
+                      <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Revenue</p>
+                    </div>
+                    {expandedReport === report.id ? <ChevronUp className="w-5 h-5 text-muted-foreground" /> : <ChevronDown className="w-5 h-5 text-muted-foreground" />}
+                  </div>
+                </div>
+
+                {expandedReport === report.id && (
+                  <div className="border-t border-border bg-muted/20">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="text-muted-foreground text-xs uppercase tracking-wider">
+                            <th className="px-6 py-3 text-left font-semibold">Menu Item</th>
+                            <th className="px-6 py-3 text-center font-semibold">Sold</th>
+                            <th className="px-6 py-3 text-center font-semibold">Left</th>
+                            <th className="px-6 py-3 text-right font-semibold">Revenue</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border">
+                          {report.item_reports.map((item: any) => (
+                            <tr key={item.id} className={item.quantity_sold > 0 ? "bg-primary/5" : ""}>
+                              <td className="px-6 py-4 font-medium">{item.food_item_name}</td>
+                              <td className="px-6 py-3 text-center">{item.quantity_sold}</td>
+                              <td className="px-6 py-3 text-center text-muted-foreground">{item.quantity_left}</td>
+                              <td className="px-6 py-3 text-right font-bold">₹{item.revenue.toFixed(2)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

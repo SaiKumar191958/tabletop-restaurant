@@ -20,7 +20,10 @@ from orders.views import (
     OrderCreateListView,
     AdminOrderListView,
     AdminOrderUpdateView,
-    OrderStatusUpdateView
+    OrderStatusUpdateView,
+    DailyReportListView,
+    EndDayView,
+    StartDayView
 )
 from orders.payment_views import PaymentConfigView
 from rest_framework.routers import DefaultRouter
@@ -60,6 +63,9 @@ urlpatterns = [
     
     # Admin dashboard
     path('api/admin/dashboard/', DashboardStatsView.as_view(), name='admin_dashboard'),
+    path('api/admin/reports/', DailyReportListView.as_view(), name='daily_reports_list'),
+    path('api/admin/end-day/', EndDayView.as_view(), name='end_day'),
+    path('api/admin/start-day/', StartDayView.as_view(), name='start_day'),
 
     # SuperAdmin: User Management
     path('api/admin/users/', AdminUserListView.as_view(), name='admin_users_list'),

@@ -1,9 +1,85 @@
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .models import Order
-from .serializers import OrderSerializer
+from .models import Order, DailyReport, DailyItemReport, OrderItem
+from .serializers import OrderSerializer, DailyReportSerializer
 from accounts.permissions import IsAdminOrSuperAdmin, IsSuperAdmin
+from menu.models import FoodItem
+from django.utils import timezone
+from django.db.models import Sum, Count
+import datetime
+
+class DailyReportListView(generics.ListAPIView):
+    queryset = DailyReport.objects.all().order_by('-date')
+    serializer_class = DailyReportSerializer
+    permission_classes = (IsAdminOrSuperAdmin,)
+
+class EndDayView(APIView):
+    """Generates a summary report for the day's sales and remaining stock."""
+    permission_classes = (IsAdminOrSuperAdmin,)
+
+    def post(self, request):
+        today = timezone.localtime().date()
+        date_str = request.data.get('date')
+        if date_str:
+            try:
+                today = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
+            except ValueError:
+                return Response({"error": "Invalid date format. Use YYYY-MM-DD"}, status=400)
+            
+        day_name = today.strftime('%A')
+        
+        # Check if report already exists
+        report, created = DailyReport.objects.get_or_create(date=today, defaults={'day_name': day_name})
+        
+        # Calculate stats for the day
+        orders = Order.objects.filter(created_at__date=today).exclude(status='cancelled')
+        report.total_orders = orders.count()
+        report.total_revenue = orders.aggregate(total=Sum('total_price'))['total'] or 0
+        
+        # Count distinct users (authenticated + guests by device_id)
+        active_auth_users = orders.exclude(user__isnull=True).values('user').distinct().count()
+        active_guests = orders.filter(user__isnull=True).values('device_id').distinct().count()
+        report.total_users_active = active_auth_users + active_guests
+        report.save()
+        
+        # Clear existing item reports for this day and recreate
+        report.item_reports.all().delete()
+        
+        all_items = FoodItem.objects.all()
+        for item in all_items:
+            # How many were sold today
+            sold = OrderItem.objects.filter(
+                order__created_at__date=today, 
+                food_item=item
+            ).exclude(order__status='cancelled').aggregate(total=Sum('quantity'))['total'] or 0
+            
+            DailyItemReport.objects.create(
+                report=report,
+                food_item=item,
+                quantity_sold=sold,
+                quantity_left=item.current_stock,
+                revenue=sold * item.price
+            )
+            
+        return Response(DailyReportSerializer(report).data)
+
+class StartDayView(APIView):
+    """Resets the current stock of all items to their default values."""
+    permission_classes = (IsAdminOrSuperAdmin,)
+
+    def post(self, request):
+        items = FoodItem.objects.all()
+        count = 0
+        for item in items:
+            item.current_stock = item.default_stock
+            item.save()
+            count += 1
+        
+        return Response({
+            "message": f"Successfully reset stock for {count} items.",
+            "reset_at": timezone.now()
+        })
 
 class OrderCreateListView(generics.ListCreateAPIView):
     serializer_class = OrderSerializer

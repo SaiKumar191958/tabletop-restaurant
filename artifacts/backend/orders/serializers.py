@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Order, OrderItem
+from .models import Order, OrderItem, DailyReport, DailyItemReport
 from menu.models import FoodItem, RestaurantConfig
 from menu.serializers import FoodItemSerializer
 from .email_service import send_order_notification_to_admin
@@ -194,3 +194,15 @@ class OrderSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
+
+class DailyItemReportSerializer(serializers.ModelSerializer):
+    food_item_name = serializers.ReadOnlyField(source='food_item.name')
+    class Meta:
+        model = DailyItemReport
+        fields = ('id', 'food_item_name', 'quantity_sold', 'quantity_left', 'revenue')
+
+class DailyReportSerializer(serializers.ModelSerializer):
+    item_reports = DailyItemReportSerializer(many=True, read_only=True)
+    class Meta:
+        model = DailyReport
+        fields = ('id', 'date', 'day_name', 'total_orders', 'total_revenue', 'total_users_active', 'item_reports', 'created_at')
