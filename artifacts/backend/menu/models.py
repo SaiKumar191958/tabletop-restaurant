@@ -46,6 +46,8 @@ class RestaurantConfig(models.Model):
         blank=True, 
         help_text="Opening/closing per weekday (e.g., {'Mon': {'open': '09:00', 'close': '22:00'}})"
     )
+    last_stock_reset_date = models.DateField(null=True, blank=True)
+    last_report_generated_date = models.DateField(null=True, blank=True)
 
     def __str__(self):
         return self.name

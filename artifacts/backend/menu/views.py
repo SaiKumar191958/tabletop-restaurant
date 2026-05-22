@@ -10,6 +10,9 @@ class RestaurantConfigView(APIView):
     permission_classes = (permissions.AllowAny,)
 
     def get(self, request):
+        from .automation import trigger_daily_automation
+        trigger_daily_automation()
+        
         config, _ = RestaurantConfig.objects.get_or_create(id=1)
         serializer = RestaurantConfigSerializer(config)
         return Response(serializer.data)
