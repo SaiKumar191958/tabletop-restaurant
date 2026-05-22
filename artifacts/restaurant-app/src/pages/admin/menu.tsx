@@ -78,6 +78,8 @@ export default function AdminMenu() {
 
   const [foodSearch, setFoodSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [itemSearch, setItemSearch] = useState("");
+  const [categorySearch, setCategorySearch] = useState("");
 
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -95,6 +97,16 @@ export default function AdminMenu() {
 
   const invalidateItems = () => qc.invalidateQueries({ queryKey: getListMenuItemsQueryKey() });
   const invalidateCats = () => qc.invalidateQueries({ queryKey: getListCategoriesQueryKey() });
+
+  const filteredItems = items?.filter(item => 
+    item.name.toLowerCase().includes(itemSearch.toLowerCase()) ||
+    item.category?.name.toLowerCase().includes(itemSearch.toLowerCase()) ||
+    item.description?.toLowerCase().includes(itemSearch.toLowerCase())
+  );
+
+  const filteredCategories = categories?.filter(cat =>
+    cat.name.toLowerCase().includes(categorySearch.toLowerCase())
+  );
 
   const handleBulkUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -335,7 +347,16 @@ export default function AdminMenu() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="items">
+        <TabsContent value="items" className="space-y-4">
+          <div className="relative max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input 
+              value={itemSearch} 
+              onChange={(e) => setItemSearch(e.target.value)} 
+              placeholder="Search items by name, category..." 
+              className="pl-9"
+            />
+          </div>
           {itemsLoading ? (
             <p className="text-muted-foreground">Loading items...</p>
           ) : (
@@ -352,7 +373,7 @@ export default function AdminMenu() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {items?.map((item) => (
+                  {filteredItems?.map((item) => (
                     <tr key={item.id} className="hover:bg-muted/30 transition-colors text-sm">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
@@ -384,17 +405,26 @@ export default function AdminMenu() {
                   ))}
                 </tbody>
               </table>
-              {items?.length === 0 && <div className="text-center py-12 text-muted-foreground">No menu items found.</div>}
+              {filteredItems?.length === 0 && <div className="text-center py-12 text-muted-foreground">No menu items found.</div>}
             </div>
           )}
         </TabsContent>
 
-        <TabsContent value="categories">
+        <TabsContent value="categories" className="space-y-4">
+          <div className="relative max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input 
+              value={categorySearch} 
+              onChange={(e) => setCategorySearch(e.target.value)} 
+              placeholder="Search categories..." 
+              className="pl-9"
+            />
+          </div>
           {catsLoading ? (
             <p className="text-muted-foreground">Loading categories...</p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {categories?.map((cat) => (
+              {filteredCategories?.map((cat) => (
                 <div key={cat.id} className="bg-card border border-card-border rounded-xl p-4 flex items-center justify-between group">
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-12 h-12 rounded-lg bg-muted overflow-hidden shrink-0 border">
@@ -411,7 +441,7 @@ export default function AdminMenu() {
                   </div>
                 </div>
               ))}
-              {categories?.length === 0 && <div className="col-span-full text-center py-12 text-muted-foreground">No categories found.</div>}
+              {filteredCategories?.length === 0 && <div className="col-span-full text-center py-12 text-muted-foreground">No categories found.</div>}
             </div>
           )}
         </TabsContent>

@@ -8,7 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth-context";
-import { Shield, User } from "lucide-react";
+import { Shield, User, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 const ROLE_COLORS: Record<string, string> = {
   superadmin: "bg-purple-100 text-purple-700",
@@ -25,6 +26,16 @@ export default function SuperAdminUsers() {
   const updateMutation = useUpdateUserRole();
   const { toast } = useToast();
   const { user: me } = useAuth();
+  const [userSearch, setUserSearch] = useState("");
+
+  const filteredUsers = users?.filter(u => {
+    const q = userSearch.toLowerCase();
+    return (
+      u.username.toLowerCase().includes(q) ||
+      u.email.toLowerCase().includes(q) ||
+      (u.phone && u.phone.includes(q))
+    );
+  });
 
   const handleRoleChange = (id: number, role: UserRole) => {
     updateMutation.mutate(
@@ -50,10 +61,21 @@ export default function SuperAdminUsers() {
 
   return (
     <div className="page-container py-5 sm:py-8">
-      <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-6 sm:mb-8">
-        <Shield className="w-6 h-6 sm:w-7 sm:h-7 text-primary shrink-0" />
-        <h1 className="page-title">Manage Users</h1>
-        <span className="text-muted-foreground text-sm">({users?.length ?? 0})</span>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 sm:mb-8">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <Shield className="w-6 h-6 sm:w-7 sm:h-7 text-primary shrink-0" />
+          <h1 className="page-title">Manage Users</h1>
+          <span className="text-muted-foreground text-sm">({users?.length ?? 0})</span>
+        </div>
+        <div className="relative w-full md:max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input 
+            value={userSearch} 
+            onChange={(e) => setUserSearch(e.target.value)} 
+            placeholder="Search by name, email, phone..." 
+            className="pl-9"
+          />
+        </div>
       </div>
 
       <div className="bg-card border border-card-border rounded-2xl overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
@@ -68,7 +90,7 @@ export default function SuperAdminUsers() {
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {users?.map((u) => {
+            {filteredUsers?.map((u) => {
               const role = u.role as UserRole;
               const isSelf = u.id === me?.id;
 
@@ -118,7 +140,7 @@ export default function SuperAdminUsers() {
             })}
           </tbody>
         </table>
-        {users?.length === 0 && (
+        {filteredUsers?.length === 0 && (
           <p className="text-center text-muted-foreground py-12">No users found.</p>
         )}
       </div>

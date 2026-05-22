@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { PaymentBadge } from "@/components/payment-badge";
-import { ClipboardList, Edit, Plus, Minus, Trash2, Save, X } from "lucide-react";
+import { ClipboardList, Edit, Plus, Minus, Trash2, Save, X, Search } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -51,6 +51,18 @@ export default function AdminOrders() {
   const [editAddress, setEditAddress] = useState("");
   const [editPhone, setEditPhone] = useState("");
   const [editItems, setEditItems] = useState<{ food_item_id: number; name: string; quantity: number; price: number }[]>([]);
+  const [orderSearch, setOrderSearch] = useState("");
+
+  const filteredOrders = orders?.filter(order => {
+    const q = orderSearch.toLowerCase();
+    return (
+      order.id.toString().includes(q) ||
+      order.user?.username.toLowerCase().includes(q) ||
+      order.user?.email?.toLowerCase().includes(q) ||
+      order.phone.includes(q) ||
+      order.address.toLowerCase().includes(q)
+    );
+  });
 
   const handleStatusChange = (id: number, status: OrderStatus) => {
     updateStatusMutation.mutate(
@@ -146,14 +158,25 @@ export default function AdminOrders() {
 
   return (
     <div className="page-container py-5 sm:py-8">
-      <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-6 sm:mb-8">
-        <ClipboardList className="w-6 h-6 sm:w-7 sm:h-7 text-primary shrink-0" />
-        <h1 className="page-title">All Orders</h1>
-        <span className="text-muted-foreground text-sm">({orders?.length ?? 0})</span>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 sm:mb-8">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <ClipboardList className="w-6 h-6 sm:w-7 sm:h-7 text-primary shrink-0" />
+          <h1 className="page-title">All Orders</h1>
+          <span className="text-muted-foreground text-sm">({orders?.length ?? 0})</span>
+        </div>
+        <div className="relative w-full md:max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input 
+            value={orderSearch} 
+            onChange={(e) => setOrderSearch(e.target.value)} 
+            placeholder="Search by ID, name, email, phone..." 
+            className="pl-9"
+          />
+        </div>
       </div>
 
-      {orders?.length === 0 ? (
-        <p className="text-muted-foreground text-center py-12">No orders yet.</p>
+      {filteredOrders?.length === 0 ? (
+        <p className="text-muted-foreground text-center py-12">No orders found.</p>
       ) : (
         <div className="bg-card border border-card-border rounded-2xl overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
           <table className="w-full min-w-[45rem]">
@@ -169,7 +192,7 @@ export default function AdminOrders() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {orders?.map((order) => {
+              {filteredOrders?.map((order) => {
                 const status = order.status as OrderStatus;
                 return (
                   <tr key={order.id} className="hover:bg-muted/30 transition-colors">
