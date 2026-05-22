@@ -147,10 +147,12 @@ class GuestLoginView(APIView):
         
         # Find or create guest user
         username = f"guest_{device_id[:20]}"
+        email = f"guest_{device_id[:30]}@tabletop.example.com"
         user, created = CustomUser.objects.get_or_create(
             device_id=device_id,
             defaults={
                 'username': username,
+                'email': email,
                 'role': 'guest',
                 'is_active': True,
             }

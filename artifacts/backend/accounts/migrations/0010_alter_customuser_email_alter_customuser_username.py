@@ -5,12 +5,23 @@ from django.db import migrations, models
 
 def deduplicate_emails(apps, schema_editor):
     CustomUser = apps.get_model('accounts', 'CustomUser')
-    # Find emails that appear more than once
+    
+    # 1. Assign dummy emails to users with empty or null emails
+    # Using filter with empty string and isnull=True
+    empty_users = list(CustomUser.objects.filter(models.Q(email='') | models.Q(email__isnull=True)))
+    for user in empty_users:
+        if user.role == 'guest' and user.device_id:
+            user.email = f"guest_{user.device_id[:30]}@tabletop.example.com"
+        else:
+            user.email = f"user_{user.id}@tabletop.example.com"
+        user.save()
+
+    # 2. Deduplicate existing emails
     duplicate_emails = CustomUser.objects.values('email').annotate(email_count=models.Count('id')).filter(email_count__gt=1)
     
     for entry in duplicate_emails:
         email = entry['email']
-        if not email:
+        if not email: # Should be handled above, but just in case
             continue
         # Keep the most recently logged in user, or the oldest account if never logged in
         users = list(CustomUser.objects.filter(email=email).order_by('-last_login', '-date_joined'))
