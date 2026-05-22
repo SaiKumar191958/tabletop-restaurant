@@ -1,10 +1,9 @@
-import { useGetDashboardStats, useListDailyReports, useEndDay, useStartDay } from "@/lib/api-hooks";
+import { useGetDashboardStats, useListDailyReports } from "@/lib/api-hooks";
 import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { ShoppingBag, Banknote, Users, UtensilsCrossed, TrendingUp, Settings, FileText, RotateCcw, List, ChevronDown, ChevronUp } from "lucide-react";
+import { ShoppingBag, Banknote, Users, UtensilsCrossed, TrendingUp, Settings, FileText, List, ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
-import { toast } from "react-hot-toast";
 
 const STATUS_COLORS: Record<string, string> = {
   pending:   "bg-yellow-500",
@@ -17,26 +16,8 @@ const STATUS_COLORS: Record<string, string> = {
 export default function AdminDashboard() {
   const { data: stats, isLoading } = useGetDashboardStats();
   const { data: reports, isLoading: reportsLoading } = useListDailyReports();
-  const endDayMutation = useEndDay();
-  const startDayMutation = useStartDay();
 
   const [expandedReport, setExpandedReport] = useState<number | null>(null);
-
-  const handleEndDay = () => {
-    if (!confirm("Generate daily report for today? This will summarize all sales and remaining stock.")) return;
-    endDayMutation.mutate({}, {
-      onSuccess: () => toast.success("Daily report generated!"),
-      onError: () => toast.error("Failed to generate report")
-    });
-  };
-
-  const handleStartDay = () => {
-    if (!confirm("Reset all items current stock to their default values for a new day?")) return;
-    startDayMutation.mutate(undefined, {
-      onSuccess: () => toast.success("Stock reset for all items!"),
-      onError: () => toast.error("Failed to reset stock")
-    });
-  };
 
   if (isLoading) {
     return (
@@ -69,32 +50,12 @@ export default function AdminDashboard() {
           <TrendingUp className="w-6 h-6 sm:w-7 sm:h-7 text-primary shrink-0" />
           <h1 className="page-title">Dashboard</h1>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button 
-            variant="outline" 
-            className="gap-2 text-orange-600 border-orange-200 hover:bg-orange-50"
-            onClick={handleStartDay}
-            disabled={startDayMutation.isPending}
-          >
-            <RotateCcw className="w-4 h-4" />
-            {startDayMutation.isPending ? "Resetting..." : "Start Day (Reset Stock)"}
+        <Link to="/admin/settings">
+          <Button className="gap-2">
+            <Settings className="w-4 h-4" />
+            Restaurant Settings
           </Button>
-          <Button 
-            variant="outline" 
-            className="gap-2 text-green-600 border-green-200 hover:bg-green-50"
-            onClick={handleEndDay}
-            disabled={endDayMutation.isPending}
-          >
-            <FileText className="w-4 h-4" />
-            {endDayMutation.isPending ? "Generating..." : "End Day (Daily Report)"}
-          </Button>
-          <Link to="/admin/settings">
-            <Button className="gap-2">
-              <Settings className="w-4 h-4" />
-              Restaurant Settings
-            </Button>
-          </Link>
-        </div>
+        </Link>
       </div>
 
       {/* Stat cards */}
@@ -178,7 +139,7 @@ export default function AdminDashboard() {
           </div>
         ) : !reports || reports.length === 0 ? (
           <p className="text-muted-foreground text-center py-12 bg-card border border-dashed rounded-2xl">
-            No daily reports generated yet. Click "End Day" to create your first report.
+            No daily reports generated yet. Reports are automatically created at opening time for the previous day.
           </p>
         ) : (
           <div className="space-y-4">
