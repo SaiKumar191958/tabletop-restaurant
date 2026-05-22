@@ -24,7 +24,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit2, Trash2, UtensilsCrossed, Link2, Upload, ImageOff, Search, Loader2, Sparkles, FolderTree, FileDown } from "lucide-react";
+import { Plus, Edit2, Trash2, UtensilsCrossed, Link2, Upload, ImageOff, Search, Loader2, Sparkles, FolderTree, FileDown, ChevronLeft, ChevronRight } from "lucide-react";
 import type { FoodItem, MenuItemInput, Category, CategoryInput } from "@/lib/api-hooks";
 import api from "@/lib/api";
 
@@ -53,7 +53,9 @@ const emptyCatForm = {
 
 export default function AdminMenu() {
   const qc = useQueryClient();
-  const { data: items, isLoading: itemsLoading } = useListMenuItems();
+  const [itemPage, setItemPage] = useState(1);
+  const { data: itemResponse, isLoading: itemsLoading } = useListMenuItems({ page: itemPage });
+  const items = itemResponse?.results;
   const { data: categories, isLoading: catsLoading } = useListCategories();
   
   const createItem = useCreateMenuItem();
@@ -406,6 +408,32 @@ export default function AdminMenu() {
                 </tbody>
               </table>
               {filteredItems?.length === 0 && <div className="text-center py-12 text-muted-foreground">No menu items found.</div>}
+              
+              {itemResponse && itemResponse.total_pages > 1 && (
+                <div className="flex items-center justify-between px-6 py-4 bg-muted/30 border-t">
+                  <p className="text-sm text-muted-foreground">
+                    Page {itemResponse.current_page} of {itemResponse.total_pages}
+                  </p>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      disabled={!itemResponse.links.previous}
+                      onClick={() => setItemPage(prev => prev - 1)}
+                    >
+                      <ChevronLeft className="w-4 h-4 mr-1" /> Previous
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      disabled={!itemResponse.links.next}
+                      onClick={() => setItemPage(prev => prev + 1)}
+                    >
+                      Next <ChevronRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </TabsContent>

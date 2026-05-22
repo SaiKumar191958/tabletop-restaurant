@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import { Star, Leaf, Search, SlidersHorizontal, X } from "lucide-react";
+import { Star, Leaf, Search, SlidersHorizontal, X, ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function MenuPage() {
   const rawSearch = useSearch();
@@ -20,15 +20,18 @@ export default function MenuPage() {
   const [selectedCat, setSelectedCat] = useState<number | null>(initialCat);
   const [foodType, setFoodType] = useState<"veg" | "nonveg" | null>(null);
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
+  const [page, setPage] = useState(1);
 
   const { data: categories } = useListCategories();
   const { config: restaurantConfig } = useRestaurant();
-  const { data: items, isLoading } = useListMenuItems({
+  const { data: itemResponse, isLoading } = useListMenuItems({
     category_id: selectedCat ?? undefined,
     food_type: foodType ?? undefined,
     max_price: maxPrice ?? undefined,
     search: searchQ || undefined,
+    page: page,
   });
+  const items = itemResponse?.results;
 
   const { addItem, items: cartItems } = useCart();
   const navigate = useNavigate();
@@ -69,7 +72,7 @@ export default function MenuPage() {
       <div className="mb-4 sm:mb-6">
         <h1 className="page-title">Full Menu</h1>
         <p className="text-muted-foreground mt-1 text-sm sm:text-base">
-          {items ? `${items.length} items available` : "Loading..."}
+          {itemResponse ? `${itemResponse.count} items available` : "Loading..."}
         </p>
       </div>
 
@@ -264,6 +267,40 @@ export default function MenuPage() {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {itemResponse && itemResponse.total_pages > 1 && (
+            <div className="flex items-center justify-center gap-4 mt-12 pb-8">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={!itemResponse.links.previous}
+                onClick={() => {
+                  setPage(prev => prev - 1);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="rounded-full px-6"
+              >
+                <ChevronLeft className="w-4 h-4 mr-2" />
+                Previous
+              </Button>
+              <span className="text-sm font-medium text-muted-foreground">
+                Page {itemResponse.current_page} of {itemResponse.total_pages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={!itemResponse.links.next}
+                onClick={() => {
+                  setPage(prev => prev + 1);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="rounded-full px-6"
+              >
+                Next
+                <ChevronRight className="w-4 h-4 ml-2" />
+              </Button>
             </div>
           )}
         </div>

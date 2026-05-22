@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { useListMyOrders } from "@/lib/api-hooks";
 import { PaymentBadge } from "@/components/payment-badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/lib/auth-context";
 import { getDeviceId } from "@/lib/utils";
-import { Package, Clock, CheckCircle, XCircle, Truck } from "lucide-react";
+import { Package, Clock, CheckCircle, XCircle, Truck, ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const STATUS_CONFIG = {
   pending:   { label: "Pending",   color: "bg-yellow-100 text-yellow-700",  icon: Clock },
@@ -16,7 +18,9 @@ const STATUS_CONFIG = {
 export default function OrdersPage() {
   const { user } = useAuth();
   const deviceId = getDeviceId();
-  const { data: orders, isLoading } = useListMyOrders(user ? undefined : deviceId);
+  const [page, setPage] = useState(1);
+  const { data: orderResponse, isLoading } = useListMyOrders(user ? undefined : deviceId, { page });
+  const orders = orderResponse?.results;
 
   if (isLoading) {
     return (
@@ -42,10 +46,12 @@ export default function OrdersPage() {
   return (
     <div className="page-container py-5 sm:py-8">
       <h1 className="page-title mb-2">My Orders</h1>
-      <p className="text-muted-foreground mb-6 sm:mb-8 text-sm sm:text-base">{orders.length} order{orders.length !== 1 ? "s" : ""} placed</p>
+      <p className="text-muted-foreground mb-6 sm:mb-8 text-sm sm:text-base">
+        {orderResponse?.count ?? 0} order{(orderResponse?.count ?? 0) !== 1 ? "s" : ""} placed
+      </p>
 
       <div className="space-y-4">
-        {orders.map((order) => {
+        {orders?.map((order) => {
           const status = order.status as keyof typeof STATUS_CONFIG;
           const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.pending;
           const Icon = cfg.icon;
@@ -100,6 +106,38 @@ export default function OrdersPage() {
           );
         })}
       </div>
+
+      {orderResponse && orderResponse.total_pages > 1 && (
+        <div className="flex items-center justify-center gap-4 mt-8 pb-8">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!orderResponse.links.previous}
+            onClick={() => {
+              setPage(prev => prev - 1);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          >
+            <ChevronLeft className="w-4 h-4 mr-2" />
+            Previous
+          </Button>
+          <span className="text-sm font-medium text-muted-foreground">
+            Page {orderResponse.current_page} of {orderResponse.total_pages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!orderResponse.links.next}
+            onClick={() => {
+              setPage(prev => prev + 1);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          >
+            Next
+            <ChevronRight className="w-4 h-4 ml-2" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

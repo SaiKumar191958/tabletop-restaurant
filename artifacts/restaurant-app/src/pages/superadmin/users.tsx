@@ -9,8 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth-context";
-import { Shield, User, Search } from "lucide-react";
+import { Shield, User, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 const ROLE_COLORS: Record<string, string> = {
   superadmin: "bg-purple-100 text-purple-700",
@@ -23,7 +24,9 @@ type UserRole = typeof ROLES[number];
 
 export default function SuperAdminUsers() {
   const qc = useQueryClient();
-  const { data: users, isLoading } = useListUsers();
+  const [userPage, setUserPage] = useState(1);
+  const { data: userResponse, isLoading } = useListUsers({ page: userPage });
+  const users = userResponse?.results;
   const updateMutation = useUpdateUserRole();
   const { toast } = useToast();
   const { user: me } = useAuth();
@@ -141,6 +144,31 @@ export default function SuperAdminUsers() {
             })}
           </tbody>
         </table>
+        {userResponse && userResponse.total_pages > 1 && (
+          <div className="flex items-center justify-between px-6 py-4 bg-muted/30 border-t">
+            <p className="text-sm text-muted-foreground">
+              Page {userResponse.current_page} of {userResponse.total_pages}
+            </p>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                disabled={!userResponse.links.previous}
+                onClick={() => setUserPage(prev => prev - 1)}
+              >
+                <ChevronLeft className="w-4 h-4 mr-1" /> Previous
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                disabled={!userResponse.links.next}
+                onClick={() => setUserPage(prev => prev + 1)}
+              >
+                Next <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
+            </div>
+          </div>
+        )}
         {filteredUsers?.length === 0 && (
           <p className="text-center text-muted-foreground py-12">No users found.</p>
         )}

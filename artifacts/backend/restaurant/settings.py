@@ -202,6 +202,8 @@ REST_FRAMEWORK = {
         'rest_framework.parsers.FormParser',
         'rest_framework.parsers.MultiPartParser',
     ),
+    'DEFAULT_PAGINATION_CLASS': 'accounts.pagination.StandardResultsSetPagination',
+    'PAGE_SIZE': 50,
 }
 
 # Simple JWT Configuration

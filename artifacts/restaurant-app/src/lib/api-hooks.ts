@@ -104,11 +104,24 @@ export interface DashboardStats {
   recent_orders: Order[];
 }
 
+export interface PaginatedResponse<T> {
+  results: T[];
+  count: number;
+  total_pages: number;
+  current_page: number;
+  links: {
+    next: string | null;
+    previous: string | null;
+  };
+}
+
 export interface ListMenuItemsParams {
   category_id?: number;
   food_type?: "veg" | "nonveg";
   max_price?: number;
   search?: string;
+  page?: number;
+  page_size?: number;
 }
 
 export interface ExternalFoodResult {
@@ -328,12 +341,22 @@ export function useListCategories(
 
 export function useListMenuItems(
   params?: ListMenuItemsParams,
-  options?: Omit<UseQueryOptions<FoodItem[]>, "queryKey" | "queryFn">,
+  options?: Omit<UseQueryOptions<PaginatedResponse<FoodItem>>, "queryKey" | "queryFn">,
 ) {
   return useQuery({
     queryKey: getListMenuItemsQueryKey(params),
     queryFn: async () => {
       const { data } = await api.get("menu/", { params });
+      
+      if (data.results && typeof data.count === 'number') {
+        const items = (data.results as Record<string, unknown>[]).map(normalizeFoodItem);
+        return {
+          ...data,
+          results: items
+        } as PaginatedResponse<FoodItem>;
+      }
+
+      // Fallback for non-paginated response
       const list = Array.isArray(data) ? data : data.results ?? [];
       let items = (list as Record<string, unknown>[]).map(normalizeFoodItem);
 
@@ -351,7 +374,13 @@ export function useListMenuItems(
         items = items.filter((i) => i.name.toLowerCase().includes(q));
       }
 
-      return items;
+      return {
+        results: items,
+        count: items.length,
+        total_pages: 1,
+        current_page: 1,
+        links: { next: null, previous: null }
+      };
     },
     ...options,
   });
@@ -359,43 +388,85 @@ export function useListMenuItems(
 
 export function useListMyOrders(
   deviceId?: string,
-  options?: Omit<UseQueryOptions<Order[]>, "queryKey" | "queryFn">,
+  params?: { page?: number; page_size?: number },
+  options?: Omit<UseQueryOptions<PaginatedResponse<Order>>, "queryKey" | "queryFn">,
 ) {
   return useQuery({
-    queryKey: getListMyOrdersQueryKey(deviceId),
+    queryKey: [...getListMyOrdersQueryKey(deviceId), params],
     queryFn: async () => {
-      const params = deviceId ? { device_id: deviceId } : {};
-      const { data } = await api.get("orders/", { params });
+      const queryParams = { ...(deviceId ? { device_id: deviceId } : {}), ...params };
+      const { data } = await api.get("orders/", { params: queryParams });
+      
+      if (data.results && typeof data.count === 'number') {
+        const items = (data.results as Record<string, unknown>[]).map(normalizeOrder);
+        return { ...data, results: items } as PaginatedResponse<Order>;
+      }
+
       const list = Array.isArray(data) ? data : data.results ?? [];
-      return (list as Record<string, unknown>[]).map(normalizeOrder);
+      const items = (list as Record<string, unknown>[]).map(normalizeOrder);
+      return {
+        results: items,
+        count: items.length,
+        total_pages: 1,
+        current_page: 1,
+        links: { next: null, previous: null }
+      };
     },
     ...options,
   });
 }
 
 export function useListAllOrders(
-  options?: Omit<UseQueryOptions<Order[]>, "queryKey" | "queryFn">,
+  params?: { page?: number; page_size?: number },
+  options?: Omit<UseQueryOptions<PaginatedResponse<Order>>, "queryKey" | "queryFn">,
 ) {
   return useQuery({
-    queryKey: getListAllOrdersQueryKey(),
+    queryKey: [...getListAllOrdersQueryKey(), params],
     queryFn: async () => {
-      const { data } = await api.get("orders/all/");
+      const { data } = await api.get("orders/all/", { params });
+      
+      if (data.results && typeof data.count === 'number') {
+        const items = (data.results as Record<string, unknown>[]).map(normalizeOrder);
+        return { ...data, results: items } as PaginatedResponse<Order>;
+      }
+
       const list = Array.isArray(data) ? data : data.results ?? [];
-      return (list as Record<string, unknown>[]).map(normalizeOrder);
+      const items = (list as Record<string, unknown>[]).map(normalizeOrder);
+      return {
+        results: items,
+        count: items.length,
+        total_pages: 1,
+        current_page: 1,
+        links: { next: null, previous: null }
+      };
     },
     ...options,
   });
 }
 
 export function useListUsers(
-  options?: Omit<UseQueryOptions<User[]>, "queryKey" | "queryFn">,
+  params?: { page?: number; page_size?: number },
+  options?: Omit<UseQueryOptions<PaginatedResponse<User>>, "queryKey" | "queryFn">,
 ) {
   return useQuery({
-    queryKey: getListUsersQueryKey(),
+    queryKey: [...getListUsersQueryKey(), params],
     queryFn: async () => {
-      const { data } = await api.get("admin/users/");
+      const { data } = await api.get("admin/users/", { params });
+      
+      if (data.results && typeof data.count === 'number') {
+        const items = (data.results as Record<string, unknown>[]).map(normalizeUser);
+        return { ...data, results: items } as PaginatedResponse<User>;
+      }
+
       const list = Array.isArray(data) ? data : data.results ?? [];
-      return (list as Record<string, unknown>[]).map(normalizeUser);
+      const items = (list as Record<string, unknown>[]).map(normalizeUser);
+      return {
+        results: items,
+        count: items.length,
+        total_pages: 1,
+        current_page: 1,
+        links: { next: null, previous: null }
+      };
     },
     ...options,
   });

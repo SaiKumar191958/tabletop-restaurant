@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { PaymentBadge } from "@/components/payment-badge";
-import { ClipboardList, Edit, Plus, Minus, Trash2, Save, X, Search } from "lucide-react";
+import { ClipboardList, Edit, Plus, Minus, Trash2, Save, X, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -41,7 +41,9 @@ const STATUS_COLORS: Record<OrderStatus, string> = {
 export default function AdminOrders() {
   const qc = useQueryClient();
   const { user } = useAuth();
-  const { data: orders, isLoading } = useListAllOrders();
+  const [orderPage, setOrderPage] = useState(1);
+  const { data: orderResponse, isLoading } = useListAllOrders({ page: orderPage });
+  const orders = orderResponse?.results;
   const updateStatusMutation = useUpdateOrderStatus();
   const updateOrderMutation = useUpdateOrder();
   const { data: menuItems } = useListMenuItems();
@@ -254,6 +256,31 @@ export default function AdminOrders() {
               })}
             </tbody>
           </table>
+          {orderResponse && orderResponse.total_pages > 1 && (
+            <div className="flex items-center justify-between px-6 py-4 bg-muted/30 border-t">
+              <p className="text-sm text-muted-foreground">
+                Page {orderResponse.current_page} of {orderResponse.total_pages}
+              </p>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  disabled={!orderResponse.links.previous}
+                  onClick={() => setOrderPage(prev => prev - 1)}
+                >
+                  <ChevronLeft className="w-4 h-4 mr-1" /> Previous
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  disabled={!orderResponse.links.next}
+                  onClick={() => setOrderPage(prev => prev + 1)}
+                >
+                  Next <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
