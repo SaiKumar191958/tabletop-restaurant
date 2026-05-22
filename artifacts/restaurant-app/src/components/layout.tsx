@@ -42,6 +42,8 @@ function Navbar() {
 
   const restaurantName = config?.name || "Sri Durga Military Hotel";
 
+  const isGuest = user?.role === "guest" || user?.username?.startsWith("guest_");
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 w-full border-b-2 border-gray-300 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="page-container h-14 sm:h-16 flex items-center justify-between gap-2">
@@ -92,7 +94,7 @@ function Navbar() {
                       )}
                     </div>
                     <span className="text-sm font-medium hidden lg:block">
-                      {user.role === "guest" ? "Guest" : user.username}
+                      {isGuest ? "Guest" : user.username}
                     </span>
                     <ChevronDown className="w-4 h-4 text-muted-foreground hidden lg:block" />
                   </Button>
@@ -101,9 +103,9 @@ function Navbar() {
                   <DropdownMenuLabel>
                     <div className="flex flex-col space-y-1">
                       <p className="text-sm font-medium leading-none">
-                        {user.role === "guest" ? "Guest" : user.username}
+                        {isGuest ? "Guest" : user.username}
                       </p>
-                      {user.role !== "guest" && (
+                      {!isGuest && (
                         <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
                       )}
                     </div>
@@ -182,9 +184,9 @@ function Navbar() {
                   </div>
                   <div>
                     <p className="text-sm font-medium">
-                      {user.role === "guest" ? "Guest" : user.username}
+                      {isGuest ? "Guest" : user.username}
                     </p>
-                    {user.role !== "guest" && (
+                    {!isGuest && (
                       <p className="text-xs text-muted-foreground">{user.email}</p>
                     )}
                   </div>
