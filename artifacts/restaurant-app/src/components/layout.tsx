@@ -91,15 +91,21 @@ function Navbar() {
                         <UserIcon className="w-4 h-4 text-muted-foreground" />
                       )}
                     </div>
-                    <span className="text-sm font-medium hidden lg:block">{user.username}</span>
+                    <span className="text-sm font-medium hidden lg:block">
+                      {user.role === "guest" ? "Guest" : user.username}
+                    </span>
                     <ChevronDown className="w-4 h-4 text-muted-foreground hidden lg:block" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuLabel>
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">{user.username}</p>
-                      <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                      <p className="text-sm font-medium leading-none">
+                        {user.role === "guest" ? "Guest" : user.username}
+                      </p>
+                      {user.role !== "guest" && (
+                        <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                      )}
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
@@ -175,8 +181,12 @@ function Navbar() {
                     <UserIcon className="w-5 h-5 text-muted-foreground" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium">{user.username}</p>
-                    <p className="text-xs text-muted-foreground">{user.email}</p>
+                    <p className="text-sm font-medium">
+                      {user.role === "guest" ? "Guest" : user.username}
+                    </p>
+                    {user.role !== "guest" && (
+                      <p className="text-xs text-muted-foreground">{user.email}</p>
+                    )}
                   </div>
                 </div>
                 
