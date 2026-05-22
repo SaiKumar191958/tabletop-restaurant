@@ -112,7 +112,7 @@ export default function MenuPage() {
       <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
         {/* Desktop sidebar filters */}
         <aside className="hidden lg:block lg:w-64 shrink-0">
-          <div className="bg-card border border-card-border rounded-2xl p-5 sticky top-24">
+          <div className="bg-card border border-card-border rounded-2xl p-5">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2 font-semibold">
                 <SlidersHorizontal className="w-4 h-4" />
