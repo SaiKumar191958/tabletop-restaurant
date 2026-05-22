@@ -15,7 +15,6 @@ import CartPage from "@/pages/cart";
 import CheckoutPage from "@/pages/checkout";
 import OrdersPage from "@/pages/orders";
 import LoginPage from "@/pages/login";
-import RegisterPage from "@/pages/register";
 import AdminDashboard from "@/pages/admin/dashboard";
 import AdminMenu from "@/pages/admin/menu";
 import AdminOrders from "@/pages/admin/orders";
@@ -40,7 +39,6 @@ function App() {
                     <Route element={<Layout />}>
                       <Route path="/" element={<Home />} />
                       <Route path="/login" element={<LoginPage />} />
-                      <Route path="/register" element={<RegisterPage />} />
                       <Route path="/menu" element={<MenuPage />} />
                       <Route path="/cart" element={<CartPage />} />
                       <Route path="/checkout" element={<CheckoutPage />} />

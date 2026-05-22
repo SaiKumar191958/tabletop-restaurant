@@ -135,14 +135,9 @@ function Navbar() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <div className="flex items-center gap-2">
-                <Link to="/login">
-                  <Button variant="ghost">Log in</Button>
-                </Link>
-                <Link to="/register">
-                  <Button>Sign up</Button>
-                </Link>
-              </div>
+              <Link to="/login">
+                <Button>Sign In</Button>
+              </Link>
             )}
           </div>
 
@@ -206,10 +201,7 @@ function Navbar() {
             ) : (
               <div className="flex flex-col gap-2 pt-2">
                 <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
-                  <Button variant="outline" className="w-full">Log in</Button>
-                </Link>
-                <Link to="/register" onClick={() => setIsMobileMenuOpen(false)}>
-                  <Button className="w-full">Sign up</Button>
+                  <Button className="w-full">Sign In</Button>
                 </Link>
               </div>
             )}

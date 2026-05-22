@@ -120,6 +120,10 @@ class GoogleLoginView(APIView):
                     last_name=last_name,
                     member_id=member_id,
                 )
+            elif not user.member_id:
+                from .utils import get_next_member_id
+                user.member_id = get_next_member_id()
+                user.save()
 
             tokens = _tokens_for_user(user)
             return Response({

@@ -1,6 +1,15 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils import timezone
+from django.contrib.auth.validators import UnicodeUsernameValidator
+
+
+class SpaceUnicodeUsernameValidator(UnicodeUsernameValidator):
+    regex = r'^[\w.@+-\s]+\Z'
+    message = (
+        'Enter a valid username. This value may contain only letters, '
+        'numbers, and @/./+/-/_/spaces characters.'
+    )
 
 
 class CustomUser(AbstractUser):
@@ -10,11 +19,28 @@ class CustomUser(AbstractUser):
         ('user', 'User'),
         ('guest', 'Guest'),
     ]
+    email = models.EmailField('email address', unique=True)
+    username = models.CharField(
+        'username',
+        max_length=150,
+        unique=False,
+        help_text='Required. 150 characters or fewer. Letters, digits and @/./+/-/_/spaces only.',
+        validators=[SpaceUnicodeUsernameValidator()],
+    )
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='user')
     phone = models.CharField(max_length=15, blank=True)
     device_id = models.CharField(max_length=255, blank=True, null=True, unique=True)
     profile_image = models.ImageField(upload_to='profiles/', blank=True)
     member_id = models.CharField(max_length=20, unique=True, blank=True, null=True)
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
+
+    def save(self, *args, **kwargs):
+        if not self.member_id and self.role != 'guest':
+            from .utils import get_next_member_id
+            self.member_id = get_next_member_id()
+        super().save(*args, **kwargs)
 
 class UserAddress(models.Model):
     ADDRESS_TYPES = [
