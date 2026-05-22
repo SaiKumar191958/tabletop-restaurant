@@ -17,6 +17,7 @@ const ROLE_COLORS: Record<string, string> = {
   superadmin: "bg-purple-100 text-purple-700",
   admin:      "bg-blue-100 text-blue-700",
   user:       "bg-gray-100 text-gray-600",
+  guest:      "bg-orange-100 text-orange-700",
 };
 
 const ROLES = ["user", "admin", "superadmin"] as const;
@@ -124,20 +125,22 @@ export default function SuperAdminUsers() {
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <Select
-                      value={role}
-                      onValueChange={(v) => handleRoleChange(u.id, v as UserRole)}
-                      disabled={updateMutation.isPending || isSelf}
-                    >
-                      <SelectTrigger className="w-36 h-8 text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {ROLES.map((r) => (
-                          <SelectItem key={r} value={r} className="text-xs capitalize">{r}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    {role !== ("guest" as any) && (
+                      <Select
+                        value={role}
+                        onValueChange={(v) => handleRoleChange(u.id, v as UserRole)}
+                        disabled={updateMutation.isPending || isSelf}
+                      >
+                        <SelectTrigger className="w-36 h-8 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ROLES.map((r) => (
+                            <SelectItem key={r} value={r} className="text-xs capitalize">{r}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                   </td>
                 </tr>
               );
