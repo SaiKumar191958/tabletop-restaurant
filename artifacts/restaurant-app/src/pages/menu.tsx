@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Star, Leaf, Search, SlidersHorizontal, X, ChevronLeft, ChevronRight, Plus, Minus } from "lucide-react";
+import { RatingModal } from "@/components/rating-modal";
 
 export default function MenuPage() {
   const rawSearch = useSearch();
@@ -21,6 +22,7 @@ export default function MenuPage() {
   const [foodType, setFoodType] = useState<"veg" | "nonveg" | null>(null);
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
   const [page, setPage] = useState(1);
+  const [ratingItem, setRatingItem] = useState<{ id: number; name: string } | null>(null);
 
   const { data: categories } = useListCategories();
   const { config: restaurantConfig } = useRestaurant();
@@ -252,10 +254,13 @@ export default function MenuPage() {
                   <div className="p-4">
                     <div className="flex items-start justify-between mb-1">
                       <h3 className="font-semibold text-foreground line-clamp-1 flex-1">{item.name}</h3>
-                      <span className="flex items-center gap-1 text-xs text-muted-foreground ml-2 shrink-0">
+                      <button 
+                        onClick={() => setRatingItem({ id: item.id, name: item.name })}
+                        className="flex items-center gap-1 text-xs text-muted-foreground ml-2 shrink-0 hover:text-primary transition-colors"
+                      >
                         <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
                         {item.rating?.toFixed(1)}
-                      </span>
+                      </button>
                     </div>
                     <p className="text-muted-foreground text-sm line-clamp-2 mb-3">{item.description}</p>
                     {item.current_stock > 0 && item.current_stock <= 5 && (
@@ -337,6 +342,15 @@ export default function MenuPage() {
           )}
         </div>
       </div>
+
+      {ratingItem && (
+        <RatingModal
+          itemId={ratingItem.id}
+          itemName={ratingItem.name}
+          isOpen={!!ratingItem}
+          onClose={() => setRatingItem(null)}
+        />
+      )}
     </div>
   );
 }

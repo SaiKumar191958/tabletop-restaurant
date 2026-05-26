@@ -4,8 +4,9 @@ import { PaymentBadge } from "@/components/payment-badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/lib/auth-context";
 import { getDeviceId } from "@/lib/utils";
-import { Package, Clock, CheckCircle, XCircle, Truck, ChevronLeft, ChevronRight } from "lucide-react";
+import { Package, Clock, CheckCircle, XCircle, Truck, ChevronLeft, ChevronRight, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { RatingModal } from "@/components/rating-modal";
 
 const STATUS_CONFIG = {
   pending:   { label: "Pending",   color: "bg-yellow-100 text-yellow-700",  icon: Clock },
@@ -19,6 +20,7 @@ export default function OrdersPage() {
   const { user } = useAuth();
   const deviceId = getDeviceId();
   const [page, setPage] = useState(1);
+  const [ratingItem, setRatingItem] = useState<{ id: number; name: string } | null>(null);
   const { data: orderResponse, isLoading } = useListMyOrders(user ? undefined : deviceId, { page });
   const orders = orderResponse?.results;
 
@@ -98,6 +100,17 @@ export default function OrdersPage() {
                         <p className="text-sm font-medium line-clamp-1">{item.food_item?.name}</p>
                         <p className="text-xs text-muted-foreground">x{item.quantity} · ₹{item.price.toFixed(2)} each</p>
                       </div>
+                      {order.status === 'delivered' && item.food_item && (
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          className="h-8 text-primary hover:text-primary hover:bg-primary/10 gap-1 px-2"
+                          onClick={() => setRatingItem({ id: item.food_item!.id, name: item.food_item!.name })}
+                        >
+                          <Star className="w-3.5 h-3.5" />
+                          <span className="hidden xs:inline">Rate</span>
+                        </Button>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -137,6 +150,15 @@ export default function OrdersPage() {
             <ChevronRight className="w-4 h-4 ml-2" />
           </Button>
         </div>
+      )}
+
+      {ratingItem && (
+        <RatingModal
+          itemId={ratingItem.id}
+          itemName={ratingItem.name}
+          isOpen={!!ratingItem}
+          onClose={() => setRatingItem(null)}
+        />
       )}
     </div>
   );

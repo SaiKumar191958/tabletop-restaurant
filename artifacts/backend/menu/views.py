@@ -1,10 +1,12 @@
-from rest_framework import viewsets, permissions, parsers
+from rest_framework import viewsets, permissions, parsers, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .models import Category, FoodItem, RestaurantConfig
-from .serializers import CategorySerializer, FoodItemSerializer, RestaurantConfigSerializer
+from rest_framework.decorators import action
+from .models import Category, FoodItem, RestaurantConfig, Rating
+from .serializers import CategorySerializer, FoodItemSerializer, RestaurantConfigSerializer, RatingSerializer
 from .external_search import search_external_foods
 from accounts.permissions import IsAdminOrSuperAdmin
+from orders.models import Order, OrderItem
 
 class RestaurantConfigView(APIView):
     permission_classes = (permissions.AllowAny,)
@@ -132,6 +134,39 @@ class FoodItemViewSet(viewsets.ModelViewSet):
             qs = qs.filter(name__icontains=search)
 
         return qs
+
+    @action(detail=True, methods=['post', 'get'], permission_classes=[permissions.IsAuthenticated])
+    def rate(self, request, pk=None):
+        food_item = self.get_object()
+        user = request.user
+
+        if request.method == 'GET':
+            rating = Rating.objects.filter(user=user, food_item=food_item).first()
+            if rating:
+                return Response(RatingSerializer(rating).data)
+            return Response({'detail': 'No rating found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # POST: Submit or update rating
+        # 1. Verify purchase
+        has_purchased = OrderItem.objects.filter(
+            order__user=user,
+            order__status='delivered',
+            food_item=food_item
+        ).exists()
+
+        if not has_purchased:
+            return Response(
+                {'detail': 'You can only rate items you have purchased and received.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # 2. Save rating
+        rating, created = Rating.objects.get_or_create(user=user, food_item=food_item)
+        serializer = RatingSerializer(rating, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save(user=user, food_item=food_item)
+            return Response(serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ExternalFoodSearchView(APIView):

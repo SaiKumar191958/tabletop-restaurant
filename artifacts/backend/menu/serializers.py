@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Category, FoodItem, RestaurantConfig
+from .models import Category, FoodItem, RestaurantConfig, Rating
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -127,3 +127,11 @@ class RestaurantConfigSerializer(serializers.ModelSerializer):
                     pass
         
         return opening <= current_time <= closing
+
+class RatingSerializer(serializers.ModelSerializer):
+    user_name = serializers.ReadOnlyField(source='user.username')
+
+    class Meta:
+        model = Rating
+        fields = ('id', 'user', 'user_name', 'food_item', 'score', 'review', 'created_at', 'updated_at')
+        read_only_fields = ('user',)

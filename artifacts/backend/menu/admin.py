@@ -1,5 +1,11 @@
 from django.contrib import admin
-from .models import Category, FoodItem, RestaurantConfig
+from .models import Category, FoodItem, RestaurantConfig, Rating
+
+@admin.register(Rating)
+class RatingAdmin(admin.ModelAdmin):
+    list_display = ('user', 'food_item', 'score', 'created_at')
+    list_filter = ('score', 'created_at')
+    search_fields = ('user__username', 'food_item__name', 'review')
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):

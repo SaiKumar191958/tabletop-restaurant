@@ -135,6 +135,17 @@ export interface ExternalFoodResult {
   food_type: "veg" | "nonveg";
 }
 
+export interface Rating {
+  id?: number;
+  user?: number;
+  user_name?: string;
+  food_item: number;
+  score: number;
+  review?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
 function mediaUrl(path: string | null | undefined): string | undefined {
   if (!path) return undefined;
   if (path.startsWith("http")) return path;
@@ -855,6 +866,44 @@ export function useDeleteAddress(
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["addresses"] });
       queryClient.invalidateQueries({ queryKey: ["auth", "me"] });
+    },
+    ...options,
+  });
+}
+
+// ——— Rating Hooks ———
+
+export function useGetUserRating(
+  itemId: number,
+  options?: Omit<UseQueryOptions<Rating | null>, "queryKey" | "queryFn">,
+) {
+  return useQuery({
+    queryKey: ["rating", itemId],
+    queryFn: async () => {
+      try {
+        const { data } = await api.get<Rating>(`menu/${itemId}/rate/`);
+        return data;
+      } catch (err: any) {
+        if (err.response?.status === 404) return null;
+        throw err;
+      }
+    },
+    ...options,
+  });
+}
+
+export function useSubmitRating(
+  options?: UseMutationOptions<Rating, Error, { itemId: number; score: number; review?: string }>,
+) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ itemId, ...data }) => {
+      const { data: res } = await api.post(`menu/${itemId}/rate/`, data);
+      return res as Rating;
+    },
+    onSuccess: (_, { itemId }) => {
+      queryClient.invalidateQueries({ queryKey: ["rating", itemId] });
+      queryClient.invalidateQueries({ queryKey: ["menu"] }); // Update avg rating in menu
     },
     ...options,
   });

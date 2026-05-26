@@ -10,6 +10,8 @@ import { toast } from "react-hot-toast";
 import { Star, Leaf, ArrowRight, ShoppingBag, Truck, Info, Plus, Minus } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { FoodItem } from "@/lib/api-hooks";
+import { RatingModal } from "@/components/rating-modal";
+import { useState } from "react";
 
 export default function Home() {
   const { data: categories, isLoading: catLoading } = useListCategories();
@@ -21,6 +23,7 @@ export default function Home() {
   const { addItem, updateQty, items: cartItems } = useCart();
   const { config } = useRestaurant();
   const navigate = useNavigate();
+  const [ratingItem, setRatingItem] = useState<{ id: number; name: string } | null>(null);
 
   const isRestaurantOpen = config?.is_open ?? true;
 
@@ -184,10 +187,13 @@ export default function Home() {
                       </div>
                     )}
                     <div className="absolute top-3 right-3">
-                      <span className="inline-flex items-center gap-1 bg-black/70 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                      <button 
+                        onClick={() => setRatingItem({ id: item.id, name: item.name })}
+                        className="inline-flex items-center gap-1 bg-black/70 text-white px-2 py-1 rounded-full text-xs font-semibold hover:bg-primary transition-colors"
+                      >
                         <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
                         {item.rating?.toFixed(1)}
-                      </span>
+                      </button>
                     </div>
                   </div>
                   <div className="p-4">
@@ -235,6 +241,15 @@ export default function Home() {
           )}
         </div>
       </section>
+
+      {ratingItem && (
+        <RatingModal
+          itemId={ratingItem.id}
+          itemName={ratingItem.name}
+          isOpen={!!ratingItem}
+          onClose={() => setRatingItem(null)}
+        />
+      )}
     </div>
   );
 }
