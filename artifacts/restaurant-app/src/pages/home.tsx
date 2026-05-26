@@ -7,22 +7,26 @@ import { Button } from "@/components/ui/button";
 import { useCart } from "@/lib/cart-context";
 import { useRestaurant } from "@/lib/restaurant-context";
 import { toast } from "react-hot-toast";
-import { Star, Leaf, ArrowRight, ShoppingBag, Truck, Info } from "lucide-react";
+import { Star, Leaf, ArrowRight, ShoppingBag, Truck, Info, Plus, Minus } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { FoodItem } from "@/lib/api-hooks";
 
 export default function Home() {
   const { data: categories, isLoading: catLoading } = useListCategories();
   const { data: itemResponse, isLoading: featLoading } = useListMenuItems();
-  
+
   const items = itemResponse?.results || [];
   const featured = items.slice(0, 8);
-  
-  const { addItem, items: cartItems } = useCart();
+
+  const { addItem, updateQty, items: cartItems } = useCart();
   const { config } = useRestaurant();
   const navigate = useNavigate();
 
   const isRestaurantOpen = config?.is_open ?? true;
+
+  const getItemQuantity = (itemId: number) => {
+    return cartItems.find((i) => i.food_item_id === itemId)?.quantity || 0;
+  };
 
   const handleAddToCart = (item: FoodItem) => {
     if (!isRestaurantOpen) {
@@ -38,6 +42,11 @@ export default function Home() {
     });
     toast.success("Item added to the cart");
   };
+
+  const handleUpdateQty = (itemId: number, newQty: number) => {
+    updateQty(itemId, newQty);
+  };
+
 
   const restaurantName = config?.name || "Sri Durga Military Hotel";
 
@@ -186,15 +195,39 @@ export default function Home() {
                     <p className="text-muted-foreground text-sm line-clamp-2 mb-3">{item.description}</p>
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-base sm:text-lg font-bold text-primary">₹{Number(item.price).toFixed(2)}</span>
-                      <Button 
-                        size="sm" 
-                        onClick={() => handleAddToCart(item)} 
-                        disabled={!item.is_available || item.current_stock === 0 || !isRestaurantOpen}
-                        className="h-8 shrink-0 text-xs sm:text-sm"
-                      >
-                        {(!item.is_available || item.current_stock === 0 || !isRestaurantOpen) ? "Not Available" : "Add to cart"}
-                      </Button>
+                      {getItemQuantity(item.id) > 0 ? (
+                        <div className="flex items-center bg-primary text-primary-foreground rounded-lg h-8 px-1">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-6 w-6 text-primary-foreground hover:bg-primary-foreground/20"
+                            onClick={() => handleUpdateQty(item.id, getItemQuantity(item.id) - 1)}
+                          >
+                            <Minus className="w-3 h-3" />
+                          </Button>
+                          <span className="w-8 text-center text-xs font-bold">{getItemQuantity(item.id)}</span>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-6 w-6 text-primary-foreground hover:bg-primary-foreground/20"
+                            onClick={() => handleUpdateQty(item.id, getItemQuantity(item.id) + 1)}
+                            disabled={getItemQuantity(item.id) >= item.current_stock}
+                          >
+                            <Plus className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button
+                          size="sm"
+                          onClick={() => handleAddToCart(item)}
+                          disabled={!item.is_available || item.current_stock === 0 || !isRestaurantOpen}
+                          className="h-8 shrink-0 text-xs sm:text-sm"
+                        >
+                          {(!item.is_available || item.current_stock === 0 || !isRestaurantOpen) ? "Not Available" : "Add to cart"}
+                        </Button>
+                      )}
                     </div>
+
                   </div>
                 </div>
               ))}

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import { Star, Leaf, Search, SlidersHorizontal, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Star, Leaf, Search, SlidersHorizontal, X, ChevronLeft, ChevronRight, Plus, Minus } from "lucide-react";
 
 export default function MenuPage() {
   const rawSearch = useSearch();
@@ -33,10 +33,14 @@ export default function MenuPage() {
   });
   const items = itemResponse?.results;
 
-  const { addItem, items: cartItems } = useCart();
+  const { addItem, updateQty, items: cartItems } = useCart();
   const navigate = useNavigate();
 
   const isRestaurantOpen = restaurantConfig?.is_open ?? true;
+
+  const getItemQuantity = (itemId: number) => {
+    return cartItems.find((i) => i.food_item_id === itemId)?.quantity || 0;
+  };
 
   const handleAddToCart = (item: NonNullable<typeof items>[0]) => {
     if (!isRestaurantOpen) {
@@ -51,6 +55,10 @@ export default function MenuPage() {
       current_stock: item.current_stock 
     });
     toast.success("Item added to the cart");
+  };
+
+  const handleUpdateQty = (itemId: number, newQty: number) => {
+    updateQty(itemId, newQty);
   };
 
   const clearFilters = () => {
@@ -255,15 +263,39 @@ export default function MenuPage() {
                     )}
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-base sm:text-lg font-bold text-primary">₹{item.price.toFixed(2)}</span>
-                      <Button
-                        size="sm"
-                        onClick={() => handleAddToCart(item)}
-                        disabled={!item.is_available || item.current_stock <= 0 || !isRestaurantOpen}
-                        className="h-8 shrink-0 text-xs sm:text-sm"
-                      >
-                        {(!item.is_available || item.current_stock <= 0 || !isRestaurantOpen) ? "Not Available" : "Add to cart"}
-                      </Button>
+                      {getItemQuantity(item.id) > 0 ? (
+                        <div className="flex items-center bg-primary text-primary-foreground rounded-lg h-8 px-1">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-6 w-6 text-primary-foreground hover:bg-primary-foreground/20"
+                            onClick={() => handleUpdateQty(item.id, getItemQuantity(item.id) - 1)}
+                          >
+                            <Minus className="w-3 h-3" />
+                          </Button>
+                          <span className="w-8 text-center text-xs font-bold">{getItemQuantity(item.id)}</span>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-6 w-6 text-primary-foreground hover:bg-primary-foreground/20"
+                            onClick={() => handleUpdateQty(item.id, getItemQuantity(item.id) + 1)}
+                            disabled={getItemQuantity(item.id) >= item.current_stock}
+                          >
+                            <Plus className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button
+                          size="sm"
+                          onClick={() => handleAddToCart(item)}
+                          disabled={!item.is_available || item.current_stock <= 0 || !isRestaurantOpen}
+                          className="h-8 shrink-0 text-xs sm:text-sm"
+                        >
+                          {(!item.is_available || item.current_stock <= 0 || !isRestaurantOpen) ? "Not Available" : "Add to cart"}
+                        </Button>
+                      )}
                     </div>
+
                   </div>
                 </div>
               ))}
