@@ -183,15 +183,15 @@ export default function Home() {
                         <span className="bg-black/70 text-white text-sm font-medium px-3 py-1 rounded-full uppercase tracking-wider">Not Available</span>
                       </div>
                     )}
-                    <div className="absolute top-3 right-3">
-                      <span className="inline-flex items-center gap-1 bg-black/70 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                  </div>
+                  <div className="p-4">
+                    <div className="flex items-start justify-between mb-1">
+                      <h3 className="font-semibold text-foreground line-clamp-1 flex-1">{item.name}</h3>
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground ml-2 shrink-0">
                         <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
                         {item.rating?.toFixed(1)}
                       </span>
                     </div>
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-semibold text-foreground mb-1 line-clamp-1">{item.name}</h3>
                     <p className="text-muted-foreground text-sm line-clamp-2 mb-3">{item.description}</p>
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-base sm:text-lg font-bold text-primary">₹{Number(item.price).toFixed(2)}</span>
