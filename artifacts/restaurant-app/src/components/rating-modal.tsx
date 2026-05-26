@@ -24,7 +24,7 @@ export function RatingModal({ itemId, itemName, isOpen, onClose }: RatingModalPr
   const { data: existingRating, isLoading: isLoadingExisting } = useGetUserRating(itemId, { enabled: isOpen });
   const submitRating = useSubmitRating();
 
-  const [score, setScore] = useState(5);
+  const [score, setScore] = useState(0);
   const [review, setReview] = useState("");
   const [hoveredScore, setHoveredScore] = useState<number | null>(null);
 
@@ -33,12 +33,16 @@ export function RatingModal({ itemId, itemName, isOpen, onClose }: RatingModalPr
       setScore(existingRating.score);
       setReview(existingRating.review || "");
     } else {
-      setScore(5);
+      setScore(0);
       setReview("");
     }
   }, [existingRating, isOpen]);
 
   const handleSubmit = async () => {
+    if (score === 0) {
+      toast.error("Please select a rating");
+      return;
+    }
     try {
       await submitRating.mutateAsync({ itemId, score, review });
       toast.success("Rating submitted successfully");
@@ -86,7 +90,8 @@ export function RatingModal({ itemId, itemName, isOpen, onClose }: RatingModalPr
                   </button>
                 ))}
               </div>
-              <p className="text-sm font-medium">
+              <p className="text-sm font-medium h-5">
+                {score === 0 && "Select a rating"}
                 {score === 1 && "Poor"}
                 {score === 2 && "Fair"}
                 {score === 3 && "Good"}
@@ -113,7 +118,7 @@ export function RatingModal({ itemId, itemName, isOpen, onClose }: RatingModalPr
           </Button>
           <Button 
             onClick={handleSubmit} 
-            disabled={submitRating.isPending || isLoadingExisting} 
+            disabled={submitRating.isPending || isLoadingExisting || score === 0} 
             className="flex-1"
           >
             {submitRating.isPending ? "Submitting..." : (existingRating ? "Update Rating" : "Submit Rating")}
